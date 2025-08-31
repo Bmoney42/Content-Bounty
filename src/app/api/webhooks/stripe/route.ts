@@ -72,7 +72,7 @@ async function handlePaymentSuccess(paymentIntent: { metadata: { earningId?: str
     data: {
       type: "payment_received",
       title: "Payment Received!",
-      message: `Your payment of $${earning.amount} ${earning.currency} for "${earning.task.title}" has been processed successfully.`,
+      message: `Your payment of $${earning.amount} ${earning.currency} for "${earning.task?.title || 'Unknown Task'}" has been processed successfully.`,
       userId: earning.userId,
       relatedId: earning.id,
       relatedType: "earning"

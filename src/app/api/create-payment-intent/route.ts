@@ -67,10 +67,10 @@ export async function POST(req: NextRequest) {
         userId: session.user.id,
         earningId: earning.id,
         taskId: earning.taskId,
-        taskTitle: earning.task.title,
+        taskTitle: earning.task?.title || 'Unknown Task',
         platform: 'creatorbounty.xyz'
       },
-      description: `Payment for: ${earning.task.title}`,
+      description: `Payment for: ${earning.task?.title || 'Unknown Task'}`,
       receipt_email: session.user.email || undefined,
     })
 

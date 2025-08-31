@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -118,11 +118,12 @@ model Earning {
   paidAt    DateTime?
   stripePaymentIntentId String?
   userId    String
-  taskId    String
+  taskId    String?
+  bountyId  String?
 
   user User @relation(fields: [userId], references: [id])
-  task Task @relation(fields: [taskId], references: [id])
-  bounty Bounty? @relation(fields: [taskId], references: [id])
+  task Task? @relation(fields: [taskId], references: [id])
+  bounty Bounty? @relation(fields: [bountyId], references: [id])
 }
 
 enum UserRole {

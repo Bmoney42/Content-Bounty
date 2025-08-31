@@ -36,7 +36,7 @@ export async function GET() {
       currency: string;
       status: string;
       createdAt: Date;
-      task: { title: string };
+      task: { title: string } | null;
     }> = []
     if (user.role === "CREATOR") {
       earnings = await prisma.earning.findMany({
