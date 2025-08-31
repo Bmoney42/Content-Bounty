@@ -28,6 +28,16 @@ if (firebaseConfig.apiKey === "your-api-key") {
   console.error('⚠️ Firebase configuration is using fallback values! Environment variables not loaded.')
 }
 
+// Log environment variables to see what's available
+console.log('Environment Variables:', {
+  FIREBASE_API_KEY: import.meta.env.FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN: import.meta.env.FIREBASE_AUTH_DOMAIN,
+  FIREBASE_PROJECT_ID: import.meta.env.FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET: import.meta.env.FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING_SENDER_ID: import.meta.env.FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_APP_ID: import.meta.env.FIREBASE_APP_ID
+})
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
