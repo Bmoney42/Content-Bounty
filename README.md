@@ -23,6 +23,7 @@ A modern platform connecting creators with brands for sponsorship opportunities,
 #### Platform Features
 - **User Authentication**: Secure login with NextAuth.js
 - **Role-Based Access**: Separate interfaces for creators and businesses
+- **Role Switching**: Fiverr-style mode switching between Creator and Business modes
 - **Real-time Notifications**: Stay updated on application status and payments
 - **Payment Processing**: Integrated Stripe payments with escrow protection
 - **Responsive Design**: Works seamlessly on desktop and mobile
@@ -94,6 +95,15 @@ A modern platform connecting creators with brands for sponsorship opportunities,
 4. **Apply for bounties** that match your skills
 5. **Track your applications** and wait for approval
 6. **Receive payments** once work is completed
+
+### Role Switching
+
+The platform supports Fiverr-style role switching, allowing users to switch between Creator and Business modes:
+
+1. **Switch Modes**: Use the role switcher in the navigation bar to toggle between Creator and Business modes
+2. **Different Interfaces**: Each mode provides a tailored interface and functionality
+3. **Data Separation**: Your data (bounties, applications, earnings) is preserved when switching modes
+4. **Access Control**: Only Business mode users can create bounties, only Creator mode users can apply
 
 ### For Businesses
 

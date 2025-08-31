@@ -2,6 +2,7 @@
 
 import { signIn, signOut, useSession } from "next-auth/react"
 import Link from "next/link"
+import RoleSwitcher from "./RoleSwitcher"
 
 export default function Navbar() {
   const { data: session, status } = useSession()
@@ -36,7 +37,7 @@ export default function Navbar() {
               </>
             )}
             
-            {status === "authenticated" && (
+            {status === "authenticated" && session?.user && (
               <>
                 <Link
                   href="/dashboard"
@@ -44,6 +45,7 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
+                <RoleSwitcher />
                 <div className="flex items-center space-x-2">
                   {session.user?.image && (
                     <img
