@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { hybridData } from '../services/firebase'
 import { 
   User, 
   Mail, 
@@ -31,36 +30,14 @@ const Profile: React.FC = () => {
   ])
   const [loading, setLoading] = useState(true)
 
-  // Load real stats when user is available
+  // Load stats when user is available
   useEffect(() => {
-    const loadStats = async () => {
-      if (user?.id) {
-        try {
-          const stats = await hybridData.getUserStats(user.id, user.userType)
-          
-          if (user.userType === 'creator') {
-            setCreatorStats([
-              { label: "Bounties Completed", value: (stats.bountiesCompleted || 0).toString(), icon: Award },
-              { label: "Videos Created", value: (stats.videosCreated || 0).toString(), icon: Video },
-              { label: "Total Earned", value: `$${(stats.totalEarned || 0).toLocaleString()}`, icon: DollarSign }
-            ])
-          } else {
-            setBusinessStats([
-              { label: "Bounties Created", value: (stats.bountiesCreated || 0).toString(), icon: Target },
-              { label: "Creators Worked With", value: (stats.creatorsWorkedWith || 0).toString(), icon: Users },
-              { label: "Total Spent", value: `$${(stats.totalSpent || 0).toLocaleString()}`, icon: DollarSign },
-              { label: "Avg. Engagement", value: stats.avgEngagement || "8.2%", icon: TrendingUp }
-            ])
-          }
-        } catch (error) {
-          console.error('Error loading stats:', error)
-          // Keep existing mock data if there's an error
-        }
-      }
+    if (user?.id) {
+      // Use mock data for now - will be replaced with real data from NextAuth/Prisma
+      setLoading(false)
+    } else {
       setLoading(false)
     }
-
-    loadStats()
   }, [user])
 
   const completedBounties = [
