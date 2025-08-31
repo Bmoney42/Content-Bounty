@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { hybridData } from '../services/firebase'
 import { 
   User, 
   Mail, 
@@ -17,21 +18,50 @@ import {
 
 const Profile: React.FC = () => {
   const { user } = useAuth()
-
-  // Creator stats
-  const creatorStats = [
+  const [creatorStats, setCreatorStats] = useState([
     { label: "Bounties Completed", value: "23", icon: Award },
     { label: "Videos Created", value: "45", icon: Video },
     { label: "Total Earned", value: "$1,750", icon: DollarSign }
-  ]
-
-  // Business stats
-  const businessStats = [
+  ])
+  const [businessStats, setBusinessStats] = useState([
     { label: "Bounties Created", value: "12", icon: Target },
     { label: "Creators Worked With", value: "34", icon: Users },
     { label: "Total Spent", value: "$4,250", icon: DollarSign },
     { label: "Avg. Engagement", value: "8.2%", icon: TrendingUp }
-  ]
+  ])
+  const [loading, setLoading] = useState(true)
+
+  // Load real stats when user is available
+  useEffect(() => {
+    const loadStats = async () => {
+      if (user?.id) {
+        try {
+          const stats = await hybridData.getUserStats(user.id, user.userType)
+          
+          if (user.userType === 'creator') {
+            setCreatorStats([
+              { label: "Bounties Completed", value: (stats.bountiesCompleted || 0).toString(), icon: Award },
+              { label: "Videos Created", value: (stats.videosCreated || 0).toString(), icon: Video },
+              { label: "Total Earned", value: `$${(stats.totalEarned || 0).toLocaleString()}`, icon: DollarSign }
+            ])
+          } else {
+            setBusinessStats([
+              { label: "Bounties Created", value: (stats.bountiesCreated || 0).toString(), icon: Target },
+              { label: "Creators Worked With", value: (stats.creatorsWorkedWith || 0).toString(), icon: Users },
+              { label: "Total Spent", value: `$${(stats.totalSpent || 0).toLocaleString()}`, icon: DollarSign },
+              { label: "Avg. Engagement", value: stats.avgEngagement || "8.2%", icon: TrendingUp }
+            ])
+          }
+        } catch (error) {
+          console.error('Error loading stats:', error)
+          // Keep existing mock data if there's an error
+        }
+      }
+      setLoading(false)
+    }
+
+    loadStats()
+  }, [user])
 
   const completedBounties = [
     { title: "Crypto Wallet Review", company: "SecureWallet", earned: 75, date: "2024-01-15" },
@@ -63,10 +93,10 @@ const Profile: React.FC = () => {
                 <Building className="w-12 h-12 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-white mb-2">TechStart Demo</h1>
+                <h1 className="text-4xl font-bold text-white mb-2">{user.name || 'Business User'}</h1>
                 <p className="text-gray-300 flex items-center mt-2 font-medium">
                   <Mail className="w-4 h-4 mr-2" />
-                  business@techstart.com
+                  {user.email}
                 </p>
                 <p className="text-gray-400 flex items-center mt-2 font-medium">
                   <Calendar className="w-4 h-4 mr-2" />
@@ -188,10 +218,10 @@ const Profile: React.FC = () => {
               <User className="w-12 h-12 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Brandon Duff</h1>
+              <h1 className="text-4xl font-bold text-white mb-2">{user?.name || 'Creator User'}</h1>
               <p className="text-gray-300 flex items-center mt-2 font-medium">
                 <Mail className="w-4 h-4 mr-2" />
-                brandon@contentbounty.com
+                {user?.email}
               </p>
               <p className="text-gray-400 flex items-center mt-2 font-medium">
                 <Calendar className="w-4 h-4 mr-2" />

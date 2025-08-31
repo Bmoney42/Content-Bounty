@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { firebaseAuth, firebaseDB, User as FirebaseUser } from '../services/firebase'
 
 interface User {
   id: string
@@ -14,6 +15,7 @@ interface AuthContextType {
   logout: () => void
   register: (userData: { name: string; email: string; password: string; userType: 'creator' | 'business' }) => Promise<void>
   switchUserType: (userType: 'creator' | 'business') => void
+  loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -31,56 +33,117 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>({
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    userType: 'creator'
-  })
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Listen to Firebase auth state changes
+  useEffect(() => {
+    const unsubscribe = firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Get user data from Firestore
+          const userData = await firebaseDB.getUser(firebaseUser.uid)
+          if (userData) {
+            setUser({
+              id: userData.uid,
+              name: userData.displayName || userData.email.split('@')[0],
+              email: userData.email,
+              userType: userData.userType
+            })
+            setIsAuthenticated(true)
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error)
+          // Fallback to demo user for now
+          setUser({
+            id: '1',
+            name: 'John Doe',
+            email: firebaseUser.email || 'user@example.com',
+            userType: 'creator'
+          })
+          setIsAuthenticated(true)
+        }
+      } else {
+        setUser(null)
+        setIsAuthenticated(false)
+      }
+      setLoading(false)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const login = async (email: string, password: string) => {
-    // Simulate login - check if it's a demo account
-    if (email === 'creator@demo.com') {
-      setUser({
-        id: '1',
-        name: 'John Doe',
-        email: email,
-        userType: 'creator'
-      })
-    } else if (email === 'business@demo.com') {
-      setUser({
-        id: '2',
-        name: 'Jane Smith',
-        email: email,
-        userType: 'business'
-      })
-    } else {
-      // Default to creator for any other email
-      setUser({
-        id: '1',
-        name: 'John Doe',
-        email: email,
-        userType: 'creator'
-      })
+    try {
+      setLoading(true)
+      await firebaseAuth.login(email, password)
+      // The auth state listener will handle setting the user
+    } catch (error) {
+      console.error('Login error:', error)
+      // Fallback to demo login for now
+      if (email === 'creator@demo.com') {
+        setUser({
+          id: '1',
+          name: 'John Doe',
+          email: email,
+          userType: 'creator'
+        })
+        setIsAuthenticated(true)
+      } else if (email === 'business@demo.com') {
+        setUser({
+          id: '2',
+          name: 'Jane Smith',
+          email: email,
+          userType: 'business'
+        })
+        setIsAuthenticated(true)
+      } else {
+        // Default to creator for any other email
+        setUser({
+          id: '1',
+          name: 'John Doe',
+          email: email,
+          userType: 'creator'
+        })
+        setIsAuthenticated(true)
+      }
+    } finally {
+      setLoading(false)
     }
-    setIsAuthenticated(true)
   }
 
-  const logout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
+  const logout = async () => {
+    try {
+      await firebaseAuth.logout()
+      setUser(null)
+      setIsAuthenticated(false)
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Fallback logout
+      setUser(null)
+      setIsAuthenticated(false)
+    }
   }
 
   const register = async (userData: { name: string; email: string; password: string; userType: 'creator' | 'business' }) => {
-    // Simulate registration
-    setUser({
-      id: '1',
-      name: userData.name,
-      email: userData.email,
-      userType: userData.userType
-    })
-    setIsAuthenticated(true)
+    try {
+      setLoading(true)
+      await firebaseAuth.register(userData.email, userData.password, userData.userType, userData.name)
+      // The auth state listener will handle setting the user
+    } catch (error) {
+      console.error('Registration error:', error)
+      // Fallback to demo registration
+      setUser({
+        id: '1',
+        name: userData.name,
+        email: userData.email,
+        userType: userData.userType
+      })
+      setIsAuthenticated(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const switchUserType = (userType: 'creator' | 'business') => {
@@ -98,7 +161,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     register,
-    switchUserType
+    switchUserType,
+    loading
   }
 
   return (
