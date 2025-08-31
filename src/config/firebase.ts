@@ -26,6 +26,8 @@ console.log('Firebase Config:', {
 // Check if we're using fallback values
 if (firebaseConfig.apiKey === "your-api-key") {
   console.error('⚠️ Firebase configuration is using fallback values! Environment variables not loaded.')
+} else {
+  console.log('✅ Firebase configuration loaded successfully!')
 }
 
 // Log environment variables to see what's available
