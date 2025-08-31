@@ -52,15 +52,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               userType: userData.userType
             })
             setIsAuthenticated(true)
+          } else {
+            // If no user data found in Firestore, create a basic user object
+            console.log('No user data found in Firestore, creating basic user object')
+            setUser({
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+              email: firebaseUser.email || 'user@example.com',
+              userType: 'creator' // Default to creator
+            })
+            setIsAuthenticated(true)
           }
         } catch (error) {
           console.error('Error fetching user data:', error)
-          // Fallback to demo user for now
+          // Fallback to basic user data from Firebase Auth
+          console.log('Using fallback user data from Firebase Auth')
           setUser({
-            id: '1',
-            name: 'John Doe',
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
             email: firebaseUser.email || 'user@example.com',
-            userType: 'creator'
+            userType: 'creator' // Default to creator
           })
           setIsAuthenticated(true)
         }
@@ -123,18 +134,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: { name: string; email: string; password: string; userType: 'creator' | 'business' }) => {
     try {
       setLoading(true)
+      console.log('Starting registration process...')
       await firebaseAuth.register(userData.email, userData.password, userData.userType, userData.name)
+      console.log('Registration completed successfully')
       // The auth state listener will handle setting the user
     } catch (error) {
       console.error('Registration error:', error)
-      // Fallback to demo registration
-      setUser({
-        id: '1',
-        name: userData.name,
-        email: userData.email,
-        userType: userData.userType
-      })
-      setIsAuthenticated(true)
+      // If Firebase Auth succeeded but Firestore failed, we should still authenticate the user
+      const currentUser = firebaseAuth.getCurrentUser()
+      if (currentUser) {
+        console.log('Firebase Auth succeeded, setting user despite Firestore error')
+        setUser({
+          id: currentUser.uid,
+          name: userData.name,
+          email: userData.email,
+          userType: userData.userType
+        })
+        setIsAuthenticated(true)
+      } else {
+        // If Firebase Auth also failed, throw the error
+        throw error
+      }
     } finally {
       setLoading(false)
     }
