@@ -81,8 +81,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // The auth state listener will handle setting the user
     } catch (error) {
       console.error('Login error:', error)
-      // Fallback to demo login for now
-      if (email === 'creator@demo.com') {
+      // Only fallback to demo login for demo accounts
+      if (email === 'creator@demo.com' && password === 'password') {
         setUser({
           id: '1',
           name: 'John Doe',
@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userType: 'creator'
         })
         setIsAuthenticated(true)
-      } else if (email === 'business@demo.com') {
+      } else if (email === 'business@demo.com' && password === 'password') {
         setUser({
           id: '2',
           name: 'Jane Smith',
@@ -99,14 +99,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         })
         setIsAuthenticated(true)
       } else {
-        // Default to creator for any other email
-        setUser({
-          id: '1',
-          name: 'John Doe',
-          email: email,
-          userType: 'creator'
-        })
-        setIsAuthenticated(true)
+        // For real accounts, throw the error so the UI can show it
+        throw error
       }
     } finally {
       setLoading(false)

@@ -53,8 +53,10 @@ export const firebaseAuth = {
   // Register new user
   async register(email: string, password: string, userType: 'creator' | 'business', displayName?: string): Promise<User> {
     try {
+      console.log('🔥 Attempting Firebase registration with:', { email, userType, displayName })
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
+      console.log('✅ Firebase registration successful:', user.email)
       
       // Create user document in Firestore
       const userData: User = {
@@ -66,10 +68,12 @@ export const firebaseAuth = {
         profile: {}
       }
       
+      console.log('📝 Creating user document in Firestore:', userData)
       await setDoc(doc(db, 'users', user.uid), userData)
+      console.log('✅ User document created successfully')
       return userData
     } catch (error) {
-      console.error('Registration error:', error)
+      console.error('❌ Firebase registration error:', error)
       throw error
     }
   },
@@ -77,10 +81,12 @@ export const firebaseAuth = {
   // Login user
   async login(email: string, password: string): Promise<FirebaseUser> {
     try {
+      console.log('Attempting Firebase login with:', email)
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      console.log('Firebase login successful:', userCredential.user.email)
       return userCredential.user
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('Firebase login error:', error)
       throw error
     }
   },

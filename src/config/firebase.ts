@@ -13,6 +13,21 @@ const firebaseConfig = {
   appId: import.meta.env.FIREBASE_APP_ID || "your-app-id"
 }
 
+// Debug: Log Firebase configuration
+console.log('Firebase Config:', {
+  apiKey: firebaseConfig.apiKey,
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId,
+  storageBucket: firebaseConfig.storageBucket,
+  messagingSenderId: firebaseConfig.messagingSenderId,
+  appId: firebaseConfig.appId
+})
+
+// Check if we're using fallback values
+if (firebaseConfig.apiKey === "your-api-key") {
+  console.error('⚠️ Firebase configuration is using fallback values! Environment variables not loaded.')
+}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
