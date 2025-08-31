@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import { rateLimitAuth } from "@/lib/rate-limit"
 
 const handler = NextAuth({
   providers: [
@@ -16,7 +17,15 @@ const handler = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
+        // Apply rate limiting for credentials authentication
+        if (req && credentials) {
+          const rateLimitResponse = rateLimitAuth(req as any)
+          if (rateLimitResponse) {
+            throw new Error('Too many authentication attempts')
+          }
+        }
+
         if (!credentials?.email || !credentials?.password) {
           return null
         }

@@ -1,20 +1,56 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import { InputValidator } from "@/lib/validation"
+import { rateLimitSignup } from "@/lib/rate-limit"
+import { UserRole } from "@prisma/client"
 
 export async function POST(req: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResponse = rateLimitSignup(req)
+    if (rateLimitResponse) {
+      return rateLimitResponse
+    }
+
     const { name, email, password, role } = await req.json()
 
-    if (!name || !email || !password) {
+    // Validate and sanitize inputs
+    const nameValidation = InputValidator.validateName(name)
+    if (!nameValidation.isValid) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: nameValidation.error },
         { status: 400 }
       )
     }
 
+    const emailValidation = InputValidator.validateEmail(email)
+    if (!emailValidation.isValid) {
+      return NextResponse.json(
+        { error: emailValidation.error },
+        { status: 400 }
+      )
+    }
+
+    const passwordValidation = InputValidator.validatePassword(password)
+    if (!passwordValidation.isValid) {
+      return NextResponse.json(
+        { error: passwordValidation.error },
+        { status: 400 }
+      )
+    }
+
+    const roleValidation = InputValidator.validateRole(role || "CREATOR")
+    if (!roleValidation.isValid) {
+      return NextResponse.json(
+        { error: roleValidation.error },
+        { status: 400 }
+      )
+    }
+
+    // Check for existing user
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: emailValidation.sanitizedValue! }
     })
 
     if (existingUser) {
@@ -24,14 +60,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12)
+    // Hash password
+    const hashedPassword = await bcrypt.hash(passwordValidation.sanitizedValue!, 12)
 
+    // Create user with sanitized data
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: nameValidation.sanitizedValue!,
+        email: emailValidation.sanitizedValue!,
         password: hashedPassword,
-        role: role || "CREATOR"
+        role: roleValidation.sanitizedValue! as UserRole
       }
     })
 

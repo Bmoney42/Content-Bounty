@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { InputValidator } from "@/lib/validation"
 
 export async function GET() {
   try {
@@ -102,23 +103,64 @@ export async function POST(req: NextRequest) {
       maxParticipants 
     } = await req.json()
 
-    if (!title || !description || !reward) {
+    // Validate and sanitize inputs
+    const titleValidation = InputValidator.validateBountyTitle(title)
+    if (!titleValidation.isValid) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: titleValidation.error },
         { status: 400 }
       )
     }
 
+    const descriptionValidation = InputValidator.validateBountyDescription(description)
+    if (!descriptionValidation.isValid) {
+      return NextResponse.json(
+        { error: descriptionValidation.error },
+        { status: 400 }
+      )
+    }
+
+    const rewardValidation = InputValidator.validateAmount(reward)
+    if (!rewardValidation.isValid) {
+      return NextResponse.json(
+        { error: rewardValidation.error },
+        { status: 400 }
+      )
+    }
+
+    // Validate currency
+    const validCurrencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD']
+    const sanitizedCurrency = validCurrencies.includes(currency) ? currency : 'USD'
+
+    // Validate bounty type
+    const validBountyTypes = ['CONTENT_CREATION', 'PRODUCT_REVIEW', 'SOCIAL_MEDIA_POST', 'VIDEO_CREATION', 'PHOTOGRAPHY', 'INFLUENCER_MARKETING', 'CUSTOM']
+    const sanitizedBountyType = validBountyTypes.includes(bountyType) ? bountyType : 'CONTENT_CREATION'
+
+    // Validate max participants
+    const sanitizedMaxParticipants = Math.min(Math.max(parseInt(maxParticipants) || 1, 1), 100)
+
+    // Validate deadline
+    let sanitizedDeadline = null
+    if (deadline) {
+      const deadlineDate = new Date(deadline)
+      if (!isNaN(deadlineDate.getTime()) && deadlineDate > new Date()) {
+        sanitizedDeadline = deadlineDate
+      }
+    }
+
+    // Sanitize requirements
+    const sanitizedRequirements = requirements ? InputValidator.sanitizeString(requirements) : null
+
     const bounty = await prisma.bounty.create({
       data: {
-        title,
-        description,
-        reward,
-        currency: currency || "USD",
-        bountyType: bountyType || "CONTENT_CREATION",
-        requirements,
-        deadline: deadline ? new Date(deadline) : null,
-        maxParticipants: maxParticipants || 1,
+        title: titleValidation.sanitizedValue!,
+        description: descriptionValidation.sanitizedValue!,
+        reward: parseFloat(rewardValidation.sanitizedValue!),
+        currency: sanitizedCurrency,
+        bountyType: sanitizedBountyType,
+        requirements: sanitizedRequirements,
+        deadline: sanitizedDeadline,
+        maxParticipants: sanitizedMaxParticipants,
         businessId: session.user.id
       }
     })

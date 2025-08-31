@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { UserRole } from "@prisma/client"
 
 export async function GET() {
   try {
@@ -96,7 +97,7 @@ export async function PUT(req: NextRequest) {
         bio: bio || null,
         socialLinks: socialLinks || null,
         walletAddress: walletAddress || null,
-        ...(role && { role })
+        ...(role && { role: role as UserRole })
       },
       select: {
         id: true,
@@ -140,7 +141,7 @@ export async function PATCH(req: NextRequest) {
 
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
-      data: { role },
+      data: { role: role as UserRole },
       select: {
         id: true,
         name: true,
