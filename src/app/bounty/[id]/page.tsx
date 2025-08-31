@@ -36,7 +36,7 @@ interface Application {
   }
 }
 
-export default function BountyDetail({ params }: { params: { id: string } }) {
+export default function BountyDetail({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [bounty, setBounty] = useState<Bounty | null>(null)
@@ -48,6 +48,7 @@ export default function BountyDetail({ params }: { params: { id: string } }) {
     portfolio: ""
   })
   const [showApplicationForm, setShowApplicationForm] = useState(false)
+  const [bountyId, setBountyId] = useState<string>("")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -56,14 +57,22 @@ export default function BountyDetail({ params }: { params: { id: string } }) {
   }, [status, router])
 
   useEffect(() => {
-    if (session?.user) {
+    const getParams = async () => {
+      const resolvedParams = await params
+      setBountyId(resolvedParams.id)
+    }
+    getParams()
+  }, [params])
+
+  useEffect(() => {
+    if (session?.user && bountyId) {
       fetchBounty()
     }
-  }, [session, params.id])
+  }, [session, bountyId])
 
   const fetchBounty = async () => {
     try {
-      const res = await fetch(`/api/bounties/${params.id}`)
+      const res = await fetch(`/api/bounties/${bountyId}`)
       if (res.ok) {
         const data = await res.json()
         setBounty(data.bounty)
@@ -83,7 +92,7 @@ export default function BountyDetail({ params }: { params: { id: string } }) {
     setApplying(true)
 
     try {
-      const res = await fetch(`/api/bounties/${params.id}/apply`, {
+      const res = await fetch(`/api/bounties/${bountyId}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(applicationForm)
