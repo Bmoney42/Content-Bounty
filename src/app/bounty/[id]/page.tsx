@@ -117,7 +117,7 @@ export default function BountyDetail({ params }: { params: Promise<{ id: string 
 
   const handleApplicationAction = async (applicationId: string, action: 'approve' | 'reject') => {
     try {
-      const res = await fetch(`/api/bounties/${params.id}/applications/${applicationId}`, {
+      const res = await fetch(`/api/bounties/${bountyId}/applications/${applicationId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: action === 'approve' ? 'APPROVED' : 'REJECTED' })
