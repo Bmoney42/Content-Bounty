@@ -40,6 +40,13 @@ console.log('Environment Variables:', {
   VITE_FIREBASE_APP_ID: import.meta.env.VITE_FIREBASE_APP_ID
 })
 
+// Check if environment variables are undefined
+console.log('Environment Variable Check:', {
+  'VITE_FIREBASE_API_KEY is undefined': import.meta.env.VITE_FIREBASE_API_KEY === undefined,
+  'VITE_FIREBASE_API_KEY is empty string': import.meta.env.VITE_FIREBASE_API_KEY === '',
+  'VITE_FIREBASE_API_KEY value': import.meta.env.VITE_FIREBASE_API_KEY
+})
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
