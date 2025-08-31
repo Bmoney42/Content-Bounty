@@ -42,9 +42,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Get user data from Firestore
-          const userData = await firebaseDB.getUser(firebaseUser.uid)
+          console.log('Firebase user authenticated, fetching user data...')
+          // Get user data from Firestore with timeout
+          const userDataPromise = firebaseDB.getUser(firebaseUser.uid)
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+          )
+          
+          const userData = await Promise.race([userDataPromise, timeoutPromise]) as any
+          
           if (userData) {
+            console.log('User data fetched successfully from Firestore')
             setUser({
               id: userData.uid,
               name: userData.displayName || userData.email.split('@')[0],
@@ -88,7 +96,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true)
+      console.log('Starting login process...')
       await firebaseAuth.login(email, password)
+      console.log('Firebase login successful')
       // The auth state listener will handle setting the user
     } catch (error) {
       console.error('Login error:', error)
