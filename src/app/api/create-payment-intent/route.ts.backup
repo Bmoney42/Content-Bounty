@@ -1,0 +1,121 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { stripe } from '@/lib/stripe'
+import { prisma } from '@/lib/prisma'
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { amount, currency = 'usd', earningId } = await req.json()
+
+    if (!amount || !earningId) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      )
+    }
+
+    // Validate the earning exists and belongs to the user
+    const earning = await prisma.earning.findUnique({
+      where: { id: earningId },
+      include: {
+        user: true,
+        task: true
+      }
+    })
+
+    if (!earning) {
+      return NextResponse.json(
+        { error: 'Earning not found' },
+        { status: 404 }
+      )
+    }
+
+    if (earning.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized to access this earning' },
+        { status: 403 }
+      )
+    }
+
+    if (earning.status !== 'PENDING') {
+      return NextResponse.json(
+        { error: 'Payment has already been processed' },
+        { status: 400 }
+      )
+    }
+
+    // Validate amount matches the earning
+    if (earning.amount !== amount) {
+      return NextResponse.json(
+        { error: 'Amount mismatch' },
+        { status: 400 }
+      )
+    }
+
+    // Create payment intent with escrow functionality
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: currency.toLowerCase(),
+      metadata: {
+        userId: session.user.id,
+        earningId: earning.id,
+        taskId: earning.taskId,
+        taskTitle: earning.task.title,
+        platform: 'creatorbounty.xyz'
+      },
+      description: \Payment for: \\,
+      receipt_email: session.user.email || undefined,
+      // Add application fee for platform revenue (2.9% + 30 cents)
+      application_fee_amount: Math.round((amount * 0.029 + 0.30) * 100),
+      // Set up automatic confirmation for escrow
+      confirm: false,
+      capture_method: 'manual', // Hold payment until work is completed
+    })
+
+    // Update earning status to indicate payment is being processed
+    await prisma.earning.update({
+      where: { id: earningId },
+      data: { 
+        status: 'PROCESSING',
+        stripePaymentIntentId: paymentIntent.id
+      }
+    })
+
+    return NextResponse.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      amount: amount,
+      currency: currency
+    })
+  } catch (error) {
+    console.error('Payment intent error:', error)
+    
+    // Handle specific Stripe errors
+    if (error instanceof Error) {
+      if (error.message.includes('card')) {
+        return NextResponse.json(
+          { error: 'Invalid payment method' },
+          { status: 400 }
+        )
+      }
+      if (error.message.includes('amount')) {
+        return NextResponse.json(
+          { error: 'Invalid payment amount' },
+          { status: 400 }
+        )
+      }
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to create payment intent. Please try again.' },
+      { status: 500 }
+    )
+  }
+}
