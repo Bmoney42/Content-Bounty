@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, use } from "react"
+import { useEffect, useState } from "react"
 
 interface Campaign {
   id: string
@@ -40,22 +40,21 @@ interface TaskApplication {
   }
 }
 
-export default function CampaignDetails({ params }: { params: Promise<{ id: string }> }) {
+export default function CampaignDetails({ params }: { params: { id: string } }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<string | null>(null)
   const [taskApplications, setTaskApplications] = useState<TaskApplication[]>([])
-  const resolvedParams = use(params)
 
   useEffect(() => {
     fetchCampaign()
-  }, [resolvedParams.id])
+  }, [params.id])
 
   const fetchCampaign = async () => {
     try {
-      const res = await fetch(`/api/campaigns/${resolvedParams.id}`)
+      const res = await fetch(`/api/campaigns/${params.id}`)
       if (res.ok) {
         const data = await res.json()
         setCampaign(data)
@@ -69,7 +68,7 @@ export default function CampaignDetails({ params }: { params: Promise<{ id: stri
 
   const updateCampaignStatus = async (status: string) => {
     try {
-      const res = await fetch(`/api/campaigns/${resolvedParams.id}`, {
+      const res = await fetch(`/api/campaigns/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })

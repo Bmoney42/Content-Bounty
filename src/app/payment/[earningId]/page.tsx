@@ -123,12 +123,11 @@ function PaymentForm({ earning }: { earning: Earning }) {
   )
 }
 
-export default function PaymentPage({ params }: { params: Promise<{ earningId: string }> }) {
+export default function PaymentPage({ params }: { params: { earningId: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [earning, setEarning] = useState<Earning | null>(null)
   const [loading, setLoading] = useState(true)
-  const [earningId, setEarningId] = useState<string>("")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -137,22 +136,14 @@ export default function PaymentPage({ params }: { params: Promise<{ earningId: s
   }, [status, router])
 
   useEffect(() => {
-    const getParams = async () => {
-      const resolvedParams = await params
-      setEarningId(resolvedParams.earningId)
-    }
-    getParams()
-  }, [params])
-
-  useEffect(() => {
-    if (session?.user && earningId) {
+    if (session?.user) {
       fetchEarning()
     }
-  }, [session, earningId])
+  }, [session, params.earningId])
 
   const fetchEarning = async () => {
     try {
-      const res = await fetch(`/api/earnings/${earningId}`)
+      const res = await fetch(`/api/earnings/${params.earningId}`)
       if (res.ok) {
         const data = await res.json()
         setEarning(data.earning)

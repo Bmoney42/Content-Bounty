@@ -36,7 +36,7 @@ interface Application {
   }
 }
 
-export default function BountyDetail({ params }: { params: Promise<{ id: string }> }) {
+export default function BountyDetail({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [bounty, setBounty] = useState<Bounty | null>(null)
@@ -48,7 +48,6 @@ export default function BountyDetail({ params }: { params: Promise<{ id: string 
     portfolio: ""
   })
   const [showApplicationForm, setShowApplicationForm] = useState(false)
-  const [bountyId, setBountyId] = useState<string>("")
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -57,22 +56,14 @@ export default function BountyDetail({ params }: { params: Promise<{ id: string 
   }, [status, router])
 
   useEffect(() => {
-    const getParams = async () => {
-      const resolvedParams = await params
-      setBountyId(resolvedParams.id)
-    }
-    getParams()
-  }, [params])
-
-  useEffect(() => {
-    if (session?.user && bountyId) {
+    if (session?.user) {
       fetchBounty()
     }
-  }, [session, bountyId])
+  }, [session, params.id])
 
   const fetchBounty = async () => {
     try {
-      const res = await fetch(`/api/bounties/${bountyId}`)
+      const res = await fetch(`/api/bounties/${params.id}`)
       if (res.ok) {
         const data = await res.json()
         setBounty(data.bounty)
@@ -92,7 +83,7 @@ export default function BountyDetail({ params }: { params: Promise<{ id: string 
     setApplying(true)
 
     try {
-      const res = await fetch(`/api/bounties/${bountyId}/apply`, {
+      const res = await fetch(`/api/bounties/${params.id}/apply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(applicationForm)
@@ -117,7 +108,7 @@ export default function BountyDetail({ params }: { params: Promise<{ id: string 
 
   const handleApplicationAction = async (applicationId: string, action: 'approve' | 'reject') => {
     try {
-      const res = await fetch(`/api/bounties/${bountyId}/applications/${applicationId}`, {
+      const res = await fetch(`/api/bounties/${params.id}/applications/${applicationId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: action === 'approve' ? 'APPROVED' : 'REJECTED' })

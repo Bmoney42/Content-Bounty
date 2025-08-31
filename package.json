@@ -15,7 +15,7 @@
     "@stripe/stripe-js": "^7.9.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.2",
-    "next": "15.5.2",
+    "next": "14.2.5",
     "next-auth": "^4.24.11",
     "prisma": "^6.15.0",
     "react": "19.1.0",
@@ -29,7 +29,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.2",
+    "eslint-config-next": "14.2.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
