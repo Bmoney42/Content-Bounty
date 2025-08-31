@@ -177,6 +177,34 @@ All Firebase configuration should be in environment variables:
 
 MIT License - see LICENSE file for details
 
+## 🔧 Troubleshooting
+
+### Firestore Connection Issues
+If you see 400 Bad Request errors in the console:
+1. **Check Firebase Configuration**
+   - Verify your project ID is correct
+   - Ensure all environment variables are set
+   - Check that Firestore is enabled in your project
+
+2. **Firestore Rules**
+   - Make sure your Firestore rules allow read/write
+   - For development, you can use test mode
+
+3. **Network Issues**
+   - Check your internet connection
+   - Try refreshing the page
+   - Clear browser cache
+
+### Environment Variables Not Loading
+1. Make sure your `.env` file is in the project root
+2. Restart your development server after adding variables
+3. Check the browser console for configuration logs
+
+### Login/Registration Issues
+1. Ensure Firebase Authentication is enabled
+2. Check that Email/Password sign-in is enabled
+3. Verify your Firebase project is active
+
 ## 🆘 Support
 
 If you need help:

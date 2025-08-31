@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { firebaseAuth, firebaseDB, User as FirebaseUser } from '../services/firebase'
+import { firebaseAuth, firebaseDB, firebaseTest, User as FirebaseUser } from '../services/firebase'
 
 interface User {
   id: string
@@ -39,15 +39,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Listen to Firebase auth state changes
   useEffect(() => {
+    // Test Firestore connection on app start
+    firebaseTest.testConnection().then(isConnected => {
+      if (!isConnected) {
+        console.warn('⚠️ Firestore connection issues detected. App will use fallback mode.')
+      }
+    })
+
     const unsubscribe = firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
                  try {
            console.log('Firebase user authenticated, fetching user data...')
-           // Try to get or create user data from Firestore with timeout
-           const userDataPromise = firebaseDB.createUserIfNotExists(firebaseUser, 'creator')
-           const timeoutPromise = new Promise((_, reject) => 
-             setTimeout(() => reject(new Error('Firestore timeout')), 5000)
-           )
+                       // Try to get or create user data from Firestore with timeout
+            const userDataPromise = firebaseDB.createUserIfNotExists(firebaseUser, 'creator')
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Firestore timeout')), 3000)
+            )
            
            const userData = await Promise.race([userDataPromise, timeoutPromise]) as any
            

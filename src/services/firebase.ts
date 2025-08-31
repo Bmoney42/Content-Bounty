@@ -114,48 +114,81 @@ export const firebaseAuth = {
 
 // Database functions
 export const firebaseDB = {
-  // Get user data
+  // Get user data with retry logic
   async getUser(uid: string): Promise<User | null> {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', uid))
-      if (userDoc.exists()) {
-        return userDoc.data() as User
+    const maxRetries = 3
+    let lastError: any
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔍 Attempting to get user data (attempt ${attempt}/${maxRetries})`)
+        const userDoc = await getDoc(doc(db, 'users', uid))
+        if (userDoc.exists()) {
+          console.log('✅ User data retrieved successfully')
+          return userDoc.data() as User
+        }
+        console.log('ℹ️ User document does not exist')
+        return null
+      } catch (error) {
+        lastError = error
+        console.error(`❌ Get user error (attempt ${attempt}/${maxRetries}):`, error)
+        
+        if (attempt < maxRetries) {
+          // Wait before retrying (exponential backoff)
+          const delay = Math.pow(2, attempt) * 1000
+          console.log(`⏳ Retrying in ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
       }
-      return null
-    } catch (error) {
-      console.error('Get user error:', error)
-      return null
     }
+    
+    console.error('❌ All attempts to get user data failed')
+    return null
   },
 
-  // Create user document if it doesn't exist
+  // Create user document if it doesn't exist with retry logic
   async createUserIfNotExists(firebaseUser: FirebaseUser, userType: 'creator' | 'business' = 'creator'): Promise<User> {
-    try {
-      console.log('🔍 Checking if user document exists for:', firebaseUser.uid)
-      const existingUser = await this.getUser(firebaseUser.uid)
-      
-      if (existingUser) {
-        console.log('✅ User document already exists')
-        return existingUser
+    const maxRetries = 3
+    let lastError: any
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔍 Checking if user document exists for: ${firebaseUser.uid} (attempt ${attempt}/${maxRetries})`)
+        const existingUser = await this.getUser(firebaseUser.uid)
+        
+        if (existingUser) {
+          console.log('✅ User document already exists')
+          return existingUser
+        }
+        
+        console.log('📝 Creating missing user document...')
+        const userData: User = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email!,
+          displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          userType,
+          createdAt: new Date(),
+          profile: {}
+        }
+        
+        await setDoc(doc(db, 'users', firebaseUser.uid), userData)
+        console.log('✅ User document created successfully')
+        return userData
+      } catch (error) {
+        lastError = error
+        console.error(`❌ Error creating user document (attempt ${attempt}/${maxRetries}):`, error)
+        
+        if (attempt < maxRetries) {
+          // Wait before retrying (exponential backoff)
+          const delay = Math.pow(2, attempt) * 1000
+          console.log(`⏳ Retrying in ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
       }
-      
-      console.log('📝 Creating missing user document...')
-      const userData: User = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email!,
-        displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-        userType,
-        createdAt: new Date(),
-        profile: {}
-      }
-      
-      await setDoc(doc(db, 'users', firebaseUser.uid), userData)
-      console.log('✅ User document created successfully')
-      return userData
-    } catch (error) {
-      console.error('❌ Error creating user document:', error)
-      throw error
     }
+    
+    console.error('❌ All attempts to create user document failed')
+    throw lastError
   },
 
   // Update user profile
@@ -211,6 +244,24 @@ export const firebaseDB = {
     } catch (error) {
       console.error('Get user bounties error:', error)
       return []
+    }
+  }
+}
+
+// Firebase connection test
+export const firebaseTest = {
+  // Test Firestore connection
+  async testConnection(): Promise<boolean> {
+    try {
+      console.log('🧪 Testing Firestore connection...')
+      const testDoc = doc(db, '_test', 'connection')
+      await setDoc(testDoc, { timestamp: new Date() })
+      await getDoc(testDoc)
+      console.log('✅ Firestore connection test successful')
+      return true
+    } catch (error) {
+      console.error('❌ Firestore connection test failed:', error)
+      return false
     }
   }
 }
