@@ -128,6 +128,36 @@ export const firebaseDB = {
     }
   },
 
+  // Create user document if it doesn't exist
+  async createUserIfNotExists(firebaseUser: FirebaseUser, userType: 'creator' | 'business' = 'creator'): Promise<User> {
+    try {
+      console.log('🔍 Checking if user document exists for:', firebaseUser.uid)
+      const existingUser = await this.getUser(firebaseUser.uid)
+      
+      if (existingUser) {
+        console.log('✅ User document already exists')
+        return existingUser
+      }
+      
+      console.log('📝 Creating missing user document...')
+      const userData: User = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email!,
+        displayName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+        userType,
+        createdAt: new Date(),
+        profile: {}
+      }
+      
+      await setDoc(doc(db, 'users', firebaseUser.uid), userData)
+      console.log('✅ User document created successfully')
+      return userData
+    } catch (error) {
+      console.error('❌ Error creating user document:', error)
+      throw error
+    }
+  },
+
   // Update user profile
   async updateUserProfile(uid: string, profile: Partial<User['profile']>): Promise<void> {
     try {

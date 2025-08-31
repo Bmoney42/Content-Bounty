@@ -41,36 +41,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const unsubscribe = firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
-        try {
-          console.log('Firebase user authenticated, fetching user data...')
-          // Get user data from Firestore with timeout
-          const userDataPromise = firebaseDB.getUser(firebaseUser.uid)
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Firestore timeout')), 5000)
-          )
-          
-          const userData = await Promise.race([userDataPromise, timeoutPromise]) as any
-          
-          if (userData) {
-            console.log('User data fetched successfully from Firestore')
-            setUser({
-              id: userData.uid,
-              name: userData.displayName || userData.email.split('@')[0],
-              email: userData.email,
-              userType: userData.userType
-            })
-            setIsAuthenticated(true)
-          } else {
-            // If no user data found in Firestore, create a basic user object
-            console.log('No user data found in Firestore, creating basic user object')
-            setUser({
-              id: firebaseUser.uid,
-              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-              email: firebaseUser.email || 'user@example.com',
-              userType: 'creator' // Default to creator
-            })
-            setIsAuthenticated(true)
-          }
+                 try {
+           console.log('Firebase user authenticated, fetching user data...')
+           // Try to get or create user data from Firestore with timeout
+           const userDataPromise = firebaseDB.createUserIfNotExists(firebaseUser, 'creator')
+           const timeoutPromise = new Promise((_, reject) => 
+             setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+           )
+           
+           const userData = await Promise.race([userDataPromise, timeoutPromise]) as any
+           
+           if (userData) {
+             console.log('User data fetched/created successfully from Firestore')
+             setUser({
+               id: userData.uid,
+               name: userData.displayName || userData.email.split('@')[0],
+               email: userData.email,
+               userType: userData.userType
+             })
+             setIsAuthenticated(true)
+           } else {
+             // Fallback if everything fails
+             console.log('Fallback: Creating basic user object')
+             setUser({
+               id: firebaseUser.uid,
+               name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+               email: firebaseUser.email || 'user@example.com',
+               userType: 'creator' // Default to creator
+             })
+             setIsAuthenticated(true)
+           }
         } catch (error) {
           console.error('Error fetching user data:', error)
           // Fallback to basic user data from Firebase Auth
