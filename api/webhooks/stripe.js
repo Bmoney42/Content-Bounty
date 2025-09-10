@@ -14,7 +14,12 @@ if (!admin.apps.length) {
 
 const firebaseDB = admin.firestore()
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_Y5rbPuqqm5jcy9URkSItvIG3AJhybia5'
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+if (!webhookSecret) {
+  console.error('❌ STRIPE_WEBHOOK_SECRET environment variable not set')
+  throw new Error('Stripe webhook secret not configured')
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
