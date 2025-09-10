@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { firebaseDB } from '../services/firebase'
+import { firebaseDB, firebaseAuth } from '../services/firebase'
 import { hasAdminAccess } from '../config/adminConfig'
 import AdminAccessInfo from '../components/admin/AdminAccessInfo'
 import {
@@ -177,12 +177,13 @@ const AdminDashboard: React.FC = () => {
   // Debug functions
   const checkPaymentStatus = async () => {
     try {
-      if (!user) {
+      const firebaseUser = firebaseAuth.getCurrentUser()
+      if (!firebaseUser) {
         alert('No user authenticated')
         return
       }
       
-      const token = await user.getIdToken()
+      const token = await firebaseUser.getIdToken()
       const response = await fetch('/api/check-payment-status', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -208,13 +209,14 @@ const AdminDashboard: React.FC = () => {
       return
     }
 
-    if (!user) {
+    const firebaseUser = firebaseAuth.getCurrentUser()
+    if (!firebaseUser) {
       alert('No user authenticated')
       return
     }
 
     try {
-      const token = await user.getIdToken()
+      const token = await firebaseUser.getIdToken()
       const response = await fetch('/api/manual-bounty-activation', {
         method: 'POST',
         headers: {
@@ -249,12 +251,13 @@ const AdminDashboard: React.FC = () => {
 
   const checkEnvironment = async () => {
     try {
-      if (!user) {
+      const firebaseUser = firebaseAuth.getCurrentUser()
+      if (!firebaseUser) {
         alert('No user authenticated')
         return
       }
       
-      const token = await user.getIdToken()
+      const token = await firebaseUser.getIdToken()
       const response = await fetch('/api/check-payment-status', {
         headers: {
           'Authorization': `Bearer ${token}`
