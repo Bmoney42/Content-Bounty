@@ -79,6 +79,11 @@ const AdminDashboard: React.FC = () => {
   const [bountyTitle, setBountyTitle] = useState('')
   const [bountyDescription, setBountyDescription] = useState('')
   const [creationResult, setCreationResult] = useState<any>(null)
+  
+  // Link existing bounty state
+  const [linkPaymentIntentId, setLinkPaymentIntentId] = useState('')
+  const [linkBountyId, setLinkBountyId] = useState('')
+  const [linkResult, setLinkResult] = useState<any>(null)
 
   // Check admin access
   useEffect(() => {
@@ -324,6 +329,47 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error creating bounty:', error)
       alert('Failed to create bounty: ' + error.message)
+    }
+  }
+
+  const linkExistingBounty = async () => {
+    if (!linkPaymentIntentId || !linkBountyId) {
+      alert('Please enter both Payment Intent ID and Bounty ID')
+      return
+    }
+
+    const firebaseUser = firebaseAuth.getCurrentUser()
+    if (!firebaseUser) {
+      alert('No user authenticated')
+      return
+    }
+
+    try {
+      const token = await firebaseUser.getIdToken()
+      const response = await fetch('/api/link-bounty-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          paymentIntentId: linkPaymentIntentId,
+          bountyId: linkBountyId
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to link bounty')
+      }
+      
+      const data = await response.json()
+      setLinkResult(data)
+      console.log('Bounty linking result:', data)
+      alert('Bounty linked successfully!')
+    } catch (error) {
+      console.error('Error linking bounty:', error)
+      alert('Failed to link bounty: ' + error.message)
     }
   }
 
@@ -864,6 +910,41 @@ const AdminDashboard: React.FC = () => {
                     >
                       <DollarSign className="h-4 w-4 mr-2" />
                       Create Bounty from Payment
+                    </button>
+                  </div>
+                </div>
+
+                {/* Link Existing Bounty */}
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Target className="h-6 w-6 text-blue-400" />
+                    <h3 className="text-lg font-semibold text-white">Link Existing Bounty</h3>
+                  </div>
+                  <p className="text-gray-400 mb-4">
+                    Link an existing pending bounty with a successful Stripe payment to activate it.
+                  </p>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Payment Intent ID (e.g., pi_3S5PvzHnrJ5Y7G900lHWdD4D)"
+                      value={linkPaymentIntentId}
+                      onChange={(e) => setLinkPaymentIntentId(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Bounty ID (from your pending bounties)"
+                      value={linkBountyId}
+                      onChange={(e) => setLinkBountyId(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={linkExistingBounty}
+                      disabled={!linkPaymentIntentId || !linkBountyId}
+                      className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+                    >
+                      <Target className="h-4 w-4 mr-2" />
+                      Link Bounty with Payment
                     </button>
                   </div>
                 </div>
