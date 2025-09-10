@@ -73,6 +73,12 @@ const AdminDashboard: React.FC = () => {
   const [paymentStatus, setPaymentStatus] = useState<any>(null)
   const [activationResult, setActivationResult] = useState<any>(null)
   const [manualActivationId, setManualActivationId] = useState('')
+  
+  // Manual bounty creation state
+  const [paymentIntentId, setPaymentIntentId] = useState('')
+  const [bountyTitle, setBountyTitle] = useState('')
+  const [bountyDescription, setBountyDescription] = useState('')
+  const [creationResult, setCreationResult] = useState<any>(null)
 
   // Check admin access
   useEffect(() => {
@@ -274,6 +280,50 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error checking environment:', error)
       alert('Failed to check environment')
+    }
+  }
+
+  const createBountyFromPayment = async () => {
+    if (!paymentIntentId) {
+      alert('Please enter a Payment Intent ID')
+      return
+    }
+
+    const firebaseUser = firebaseAuth.getCurrentUser()
+    if (!firebaseUser) {
+      alert('No user authenticated')
+      return
+    }
+
+    try {
+      const token = await firebaseUser.getIdToken()
+      const response = await fetch('/api/manual-bounty-creation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          paymentIntentId,
+          bountyData: {
+            title: bountyTitle || 'Promote Creator Bounty',
+            description: bountyDescription || 'Fund this bounty to make it live on the marketplace',
+            category: 'marketing'
+          }
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to create bounty')
+      }
+      
+      const data = await response.json()
+      setCreationResult(data)
+      console.log('Bounty creation result:', data)
+      alert('Bounty created successfully!')
+    } catch (error) {
+      console.error('Error creating bounty:', error)
+      alert('Failed to create bounty: ' + error.message)
     }
   }
 
@@ -774,6 +824,48 @@ const AdminDashboard: React.FC = () => {
                     <Settings className="h-4 w-4 mr-2" />
                     Check Environment
                   </button>
+                </div>
+
+                {/* Manual Bounty Creation */}
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <DollarSign className="h-6 w-6 text-green-400" />
+                    <h3 className="text-lg font-semibold text-white">Manual Bounty Creation</h3>
+                  </div>
+                  <p className="text-gray-400 mb-4">
+                    Create a bounty from a successful Stripe payment that didn't process properly.
+                  </p>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Payment Intent ID (e.g., pi_3S5PvzHnrJ5Y7G900lHWdD4D)"
+                      value={paymentIntentId}
+                      onChange={(e) => setPaymentIntentId(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Bounty Title (optional)"
+                      value={bountyTitle}
+                      onChange={(e) => setBountyTitle(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <textarea
+                      placeholder="Bounty Description (optional)"
+                      value={bountyDescription}
+                      onChange={(e) => setBountyDescription(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                    />
+                    <button
+                      onClick={createBountyFromPayment}
+                      disabled={!paymentIntentId}
+                      className="w-full inline-flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+                    >
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Create Bounty from Payment
+                    </button>
+                  </div>
                 </div>
               </div>
 
