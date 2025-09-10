@@ -177,9 +177,15 @@ const AdminDashboard: React.FC = () => {
   // Debug functions
   const checkPaymentStatus = async () => {
     try {
+      if (!user) {
+        alert('No user authenticated')
+        return
+      }
+      
+      const token = await user.getIdToken()
       const response = await fetch('/api/check-payment-status', {
         headers: {
-          'Authorization': `Bearer ${await user?.getIdToken()}`
+          'Authorization': `Bearer ${token}`
         }
       })
       
@@ -202,12 +208,18 @@ const AdminDashboard: React.FC = () => {
       return
     }
 
+    if (!user) {
+      alert('No user authenticated')
+      return
+    }
+
     try {
+      const token = await user.getIdToken()
       const response = await fetch('/api/manual-bounty-activation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user?.getIdToken()}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           escrowPaymentId: manualActivationId
@@ -237,9 +249,15 @@ const AdminDashboard: React.FC = () => {
 
   const checkEnvironment = async () => {
     try {
+      if (!user) {
+        alert('No user authenticated')
+        return
+      }
+      
+      const token = await user.getIdToken()
       const response = await fetch('/api/check-payment-status', {
         headers: {
-          'Authorization': `Bearer ${await user?.getIdToken()}`
+          'Authorization': `Bearer ${token}`
         }
       })
       
