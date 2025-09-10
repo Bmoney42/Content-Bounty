@@ -84,6 +84,10 @@ const AdminDashboard: React.FC = () => {
   const [linkPaymentIntentId, setLinkPaymentIntentId] = useState('')
   const [linkBountyId, setLinkBountyId] = useState('')
   const [linkResult, setLinkResult] = useState<any>(null)
+  
+  // User ownership check state
+  const [ownershipCheckId, setOwnershipCheckId] = useState('')
+  const [ownershipResult, setOwnershipResult] = useState<any>(null)
 
   // Check admin access
   useEffect(() => {
@@ -370,6 +374,40 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error linking bounty:', error)
       alert('Failed to link bounty: ' + error.message)
+    }
+  }
+
+  const checkBountyOwnership = async () => {
+    if (!ownershipCheckId) {
+      alert('Please enter a Bounty ID')
+      return
+    }
+
+    const firebaseUser = firebaseAuth.getCurrentUser()
+    if (!firebaseUser) {
+      alert('No user authenticated')
+      return
+    }
+
+    try {
+      const token = await firebaseUser.getIdToken()
+      const response = await fetch(`/api/check-user-bounty-ownership?bountyId=${ownershipCheckId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to check ownership')
+      }
+      
+      const data = await response.json()
+      setOwnershipResult(data)
+      console.log('Ownership check result:', data)
+    } catch (error) {
+      console.error('Error checking ownership:', error)
+      alert('Failed to check ownership: ' + error.message)
     }
   }
 
@@ -945,6 +983,34 @@ const AdminDashboard: React.FC = () => {
                     >
                       <Target className="h-4 w-4 mr-2" />
                       Link Bounty with Payment
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bounty Ownership Check */}
+                <div className="bg-white/5 rounded-lg p-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <Shield className="h-6 w-6 text-orange-400" />
+                    <h3 className="text-lg font-semibold text-white">Check Bounty Ownership</h3>
+                  </div>
+                  <p className="text-gray-400 mb-4">
+                    Debug user ID mismatches between current user and bounty ownership.
+                  </p>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Bounty ID (e.g., 2B105s8aoATjkRQxBrex)"
+                      value={ownershipCheckId}
+                      onChange={(e) => setOwnershipCheckId(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    <button
+                      onClick={checkBountyOwnership}
+                      disabled={!ownershipCheckId}
+                      className="w-full inline-flex items-center justify-center px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Check Ownership
                     </button>
                   </div>
                 </div>
