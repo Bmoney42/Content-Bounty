@@ -20,68 +20,88 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.log('🔍 Starting payment status check...')
+    
     // Authentication
     const { user, error: authError } = await verifyAuth(req, res, { requireAuth: true })
     if (authError) {
+      console.error('❌ Auth error:', authError)
       return res.status(authError.status).json({ error: authError.message })
     }
 
-    console.log('🔍 Checking payment status for user:', user.uid)
+    console.log('✅ User authenticated:', user.uid, user.email)
 
-    // Get escrow payments for this user
-    const escrowQuery = db.collection('escrow_payments')
-      .where('businessId', '==', user.uid)
-      .orderBy('createdAt', 'desc')
-      .limit(10)
+    let escrowPayments = []
+    let bounties = []
+    let recentPayments = []
 
-    const escrowSnapshot = await escrowQuery.get()
-    const escrowPayments = []
+    try {
+      // Get escrow payments for this user
+      console.log('🔍 Fetching escrow payments...')
+      const escrowQuery = db.collection('escrow_payments')
+        .where('businessId', '==', user.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(10)
 
-    escrowSnapshot.forEach(doc => {
-      const data = doc.data()
-      escrowPayments.push({
-        id: doc.id,
-        status: data.status,
-        amount: data.amount,
-        currency: data.currency || 'USD',
-        bountyId: data.bountyId,
-        hasBountyData: !!data.bountyData,
-        createdAt: data.createdAt?.toDate?.()?.toISOString(),
-        stripeSessionId: data.stripeSessionId,
-        stripeCustomerId: data.stripeCustomerId
+      const escrowSnapshot = await escrowQuery.get()
+      console.log(`📊 Found ${escrowSnapshot.size} escrow payments`)
+
+      escrowSnapshot.forEach(doc => {
+        const data = doc.data()
+        escrowPayments.push({
+          id: doc.id,
+          status: data.status,
+          amount: data.amount,
+          currency: data.currency || 'USD',
+          bountyId: data.bountyId,
+          hasBountyData: !!data.bountyData,
+          createdAt: data.createdAt?.toDate?.()?.toISOString(),
+          stripeSessionId: data.stripeSessionId,
+          stripeCustomerId: data.stripeCustomerId
+        })
       })
-    })
+    } catch (escrowError) {
+      console.error('❌ Error fetching escrow payments:', escrowError.message)
+      // Continue with empty array
+    }
 
-    // Get bounties for this user
-    const bountiesQuery = db.collection('bounties')
-      .where('businessId', '==', user.uid)
-      .orderBy('createdAt', 'desc')
-      .limit(10)
+    try {
+      // Get bounties for this user
+      console.log('🔍 Fetching bounties...')
+      const bountiesQuery = db.collection('bounties')
+        .where('businessId', '==', user.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(10)
 
-    const bountiesSnapshot = await bountiesQuery.get()
-    const bounties = []
+      const bountiesSnapshot = await bountiesQuery.get()
+      console.log(`📊 Found ${bountiesSnapshot.size} bounties`)
 
-    bountiesSnapshot.forEach(doc => {
-      const data = doc.data()
-      bounties.push({
-        id: doc.id,
-        title: data.title,
-        status: data.status,
-        paymentStatus: data.paymentStatus,
-        escrowPaymentId: data.escrowPaymentId,
-        applicationsCount: data.applicationsCount || 0,
-        createdAt: data.createdAt?.toDate?.()?.toISOString()
+      bountiesSnapshot.forEach(doc => {
+        const data = doc.data()
+        bounties.push({
+          id: doc.id,
+          title: data.title,
+          status: data.status,
+          paymentStatus: data.paymentStatus,
+          escrowPaymentId: data.escrowPaymentId,
+          applicationsCount: data.applicationsCount || 0,
+          createdAt: data.createdAt?.toDate?.()?.toISOString()
+        })
       })
-    })
+    } catch (bountiesError) {
+      console.error('❌ Error fetching bounties:', bountiesError.message)
+      // Continue with empty array
+    }
 
     // Check for recent payments (last 24 hours)
-    const recentPayments = escrowPayments.filter(payment => {
+    recentPayments = escrowPayments.filter(payment => {
+      if (!payment.createdAt) return false
       const paymentDate = new Date(payment.createdAt)
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
       return paymentDate > oneDayAgo
     })
 
-    res.status(200).json({
+    const response = {
       success: true,
       user: {
         id: user.uid,
@@ -104,13 +124,17 @@ module.exports = async (req, res) => {
         hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
         hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET
       }
-    })
+    }
+
+    console.log('✅ Payment status check completed successfully')
+    res.status(200).json(response)
 
   } catch (error) {
     console.error('❌ Error checking payment status:', error)
     res.status(500).json({ 
       error: 'Failed to check payment status',
-      message: error.message
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     })
   }
 }
