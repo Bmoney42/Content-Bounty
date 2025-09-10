@@ -55,8 +55,9 @@ module.exports = async (req, res) => {
 
     const bountyData = bountyDoc.data()
     
-    // Verify the bounty belongs to the user
-    if (bountyData.businessId !== user.uid) {
+    // Check if user is admin or if bounty belongs to the user
+    const isAdmin = user.isAdmin || user.userType === 'admin'
+    if (!isAdmin && bountyData.businessId !== user.uid) {
       return res.status(403).json({ error: 'Bounty does not belong to this user' })
     }
 

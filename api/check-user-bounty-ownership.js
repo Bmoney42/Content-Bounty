@@ -55,6 +55,7 @@ module.exports = async (req, res) => {
         id: user.uid,
         email: user.email,
         userType: user.userType,
+        isAdmin: user.isAdmin || user.userType === 'admin',
         data: currentUserData
       },
       bounty: {
@@ -73,6 +74,8 @@ module.exports = async (req, res) => {
         currentUserId: user.uid,
         bountyBusinessId: bountyData.businessId,
         isOwner: user.uid === bountyData.businessId,
+        isAdmin: user.isAdmin || user.userType === 'admin',
+        canManage: (user.isAdmin || user.userType === 'admin') || user.uid === bountyData.businessId,
         emailsMatch: currentUserData?.email === bountyOwnerData?.email
       }
     })
