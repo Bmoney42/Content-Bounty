@@ -60,7 +60,11 @@ const Upgrade: React.FC = () => {
         'Enhanced profile',
         'Advanced analytics',
         'Priority support',
-        'Early access to new features'
+        'Brand Discovery Engine',
+        'Lead Management CRM',
+        'Sponsorship Signal Detection',
+        'Email Template Library',
+        'Outreach Tracking'
       ]
     },
     business: {

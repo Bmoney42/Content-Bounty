@@ -29,6 +29,7 @@ const OAuthCallback = React.lazy(() => import('./pages/OAuthCallback'))
 const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'))
 const TermsOfService = React.lazy(() => import('./pages/TermsOfService'))
 const CreatorBanking = React.lazy(() => import('./pages/CreatorBanking'))
+const BrandDiscovery = React.lazy(() => import('./pages/BrandDiscovery'))
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'))
 const DataDeletionInstructions = React.lazy(() => import('./pages/DataDeletionInstructions'))
 const TestFeatures = React.lazy(() => import('./pages/TestFeatures'))
@@ -128,6 +129,15 @@ function AppRoutes() {
           <Layout>
             <Suspense fallback={<LoadingSpinner size="xl" text="Loading your pipeline..." variant="primary" />}>
               <CreatorPipeline />
+            </Suspense>
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/brand-discovery" element={
+        <ProtectedRoute>
+          <Layout>
+            <Suspense fallback={<LoadingSpinner size="xl" text="Loading brand discovery..." variant="primary" />}>
+              <BrandDiscovery />
             </Suspense>
           </Layout>
         </ProtectedRoute>

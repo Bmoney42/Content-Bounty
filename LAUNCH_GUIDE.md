@@ -9,6 +9,7 @@
 **Reliability:** ✅ Enterprise-Grade Task Queue & Error Monitoring  
 **Deployment:** ✅ Vercel Optimized (11/12 Functions)  
 **Development Roadmap:** 📋 20 Critical Improvements - 50% Complete (see [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md))  
+**Implementation Details:** See [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)
 
 ---
 
@@ -33,7 +34,7 @@
 4. **Launch** - Go live! 🎉
 
 ### 🚧 **POST-LAUNCH IMPROVEMENTS**
-After launch, implement critical improvements identified in [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md):
+After launch, see [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md) for how features are wired, and implement critical improvements identified in [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md):
 - Database transactions and concurrency control
 - Comprehensive dispute resolution system
 - Advanced analytics and ROI tracking

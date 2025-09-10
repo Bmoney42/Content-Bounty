@@ -14,7 +14,8 @@ import {
   Users,
   Briefcase,
   Crown,
-  CreditCard
+  CreditCard,
+  Search
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -59,6 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const creatorNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Creator Pipeline', href: '/creator-pipeline', icon: Briefcase, hasNotification: unreadApplications > 0, notificationCount: unreadApplications },
+    ...(isPremium ? [{ name: 'Brand Discovery', href: '/brand-discovery', icon: Search }] : []),
     { name: 'Banking Setup', href: '/creator-banking', icon: CreditCard, hasNotification: user?.userType === 'creator' && !canReceivePayments },
     ...(isPremium ? [] : [{ name: 'Upgrade', href: '/upgrade', icon: Crown }]),
     { name: 'Profile', href: '/profile', icon: User },

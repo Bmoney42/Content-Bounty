@@ -70,7 +70,12 @@ export const SUBSCRIPTION_PLANS: Record<string, SubscriptionPlan> = {
       'Priority placement',
       'Enhanced profile',
       'Advanced analytics',
-      'Priority support'
+      'Priority support',
+      'Brand Discovery Engine',
+      'Lead Management CRM',
+      'Sponsorship Signal Detection',
+      'Email Template Library',
+      'Outreach Tracking'
     ],
     applicationLimit: APPLICATION_LIMITS.PREMIUM_CREATOR
   },
