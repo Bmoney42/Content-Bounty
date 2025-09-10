@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creator Bounty Platform</title>
+    
+    <!-- Critical resource hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://firebase.googleapis.com">
+    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
+    <link rel="dns-prefetch" href="https://vercel.live">
+    <link rel="dns-prefetch" href="https://vitals.vercel-analytics.com">
+    
+    <!-- Optimized font loading with font-display: swap and preload -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
+    
+    <!-- Critical CSS inlined to prevent render blocking -->
+    <style>
+      /* Critical above-the-fold styles */
+      #root {
+        min-height: 100vh;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      /* Critical hero styles to prevent layout shift */
+      .hero-content {
+        min-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+      }
+      /* Critical heading styles for LCP */
+      .hero-content h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        line-height: 1.1;
+        text-align: center;
+        margin: 0 0 2rem 0;
+        color: #111827;
+      }
+      @media (min-width: 768px) {
+        .hero-content h1 {
+          font-size: 4.5rem;
+        }
+      }
+      /* Reduce font sizes on mobile for faster LCP */
+      @media (max-width: 767px) {
+        .hero-content h1 {
+          font-size: 2.5rem;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-Cp-zpohs.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-gH-7aFTg.js">
+    <link rel="modulepreload" crossorigin href="/assets/router-DCicCOur.js">
+    <link rel="modulepreload" crossorigin href="/assets/firebase-DxBuhNaX.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-D4EKNBIH.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-C07_RADz.css">
+  </head>
+  <body>
+    <div id="root">
+      <!-- Static content for immediate FCP/LCP -->
+      <div style="min-height: 100vh; background: linear-gradient(135deg, rgb(239 246 255) 0%, rgb(219 234 254) 100%); position: relative; overflow: hidden;">
+        <!-- Background elements for design -->
+        <div style="position: absolute; top: 5rem; left: 2.5rem; width: 6rem; height: 6rem; background: rgba(59, 130, 246, 0.1); border-radius: 50%; filter: blur(16px);"></div>
+        <div style="position: absolute; bottom: 10rem; right: 5rem; width: 8rem; height: 8rem; background: rgba(147, 51, 234, 0.1); border-radius: 50%; filter: blur(16px);"></div>
+        
+        <!-- Hero content -->
+        <section style="position: relative; overflow: hidden; padding: 6rem 0;">
+          <div style="max-width: 80rem; margin: 0 auto; padding: 0 1.5rem;">
+            <div class="hero-content" style="text-align: center;">
+              <!-- Badge -->
+              <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(90deg, rgb(37 99 235), rgb(147 51 234)); color: white; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; margin-bottom: 2rem;">
+                <span>⚡</span>
+                <span>Empowering Creators</span>
+              </div>
+              
+              <!-- Main heading -->
+              <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 2rem; line-height: 1.1; text-align: center; color: #111827;">
+                Join the movement to Empower
+                <span style="display: block; background: linear-gradient(90deg, rgb(37 99 235), rgb(147 51 234), rgb(236 72 153)); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                  1M creators financially free
+                </span>
+              </h1>
+              
+              <!-- Subtitle -->
+              <p style="font-size: 1.25rem; max-width: 48rem; margin: 0 auto 3rem auto; line-height: 1.625; color: rgb(75 85 99);">
+                We're building the world's largest online platform to help creators achieve financial freedom.
+                <span style="font-weight: 600; color: #111827;"> Earn more.</span>
+                <span style="font-weight: 600; color: #111827;"> Work with amazing brands.</span>
+                <span style="font-weight: 600; color: #111827;"> Build your portfolio.</span>
+              </p>
+              
+              <!-- CTA Buttons -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 5rem;">
+                <a href="/login" style="display: inline-flex; align-items: center; padding: 1rem 2rem; background: linear-gradient(90deg, rgb(37 99 235), rgb(147 51 234)); color: white; font-weight: 600; border-radius: 0.75rem; text-decoration: none; transition: transform 0.3s;">
+                  <span>Get Started</span>
+                  <span style="margin-left: 0.5rem;">→</span>
+                </a>
+              </div>
+              
+              <!-- Stats preview -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; max-width: 80rem; margin: 0 auto;">
+                <div style="background: white; border-radius: 1rem; padding: 2rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                  <div style="font-size: 2.5rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">50K+</div>
+                  <div style="color: rgb(75 85 99);">Paid to Creators</div>
+                </div>
+                <div style="background: white; border-radius: 1rem; padding: 2rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                  <div style="font-size: 2.5rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">500+</div>
+                  <div style="color: rgb(75 85 99);">Lives Changed</div>
+                </div>
+                <div style="background: white; border-radius: 1rem; padding: 2rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                  <div style="font-size: 2.5rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">100+</div>
+                  <div style="color: rgb(75 85 99);">Premium Brands</div>
+                </div>
+                <div style="background: white; border-radius: 1rem; padding: 2rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                  <div style="font-size: 2.5rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">0%</div>
+                  <div style="color: rgb(75 85 99);">100% To Creators</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
