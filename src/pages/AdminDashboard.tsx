@@ -45,7 +45,7 @@ interface AdminStats {
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bounties' | 'content' | 'payments' | 'debug'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bounties' | 'content' | 'payments' | 'debug' | 'testing'>('overview')
   
   // Stats
   const [stats, setStats] = useState<AdminStats>({
@@ -88,6 +88,12 @@ const AdminDashboard: React.FC = () => {
   // User ownership check state
   const [ownershipCheckId, setOwnershipCheckId] = useState('')
   const [ownershipResult, setOwnershipResult] = useState<any>(null)
+  
+  // Testing tools state
+  const [testUserType, setTestUserType] = useState<'creator' | 'business'>('creator')
+  const [testSubscriptionStatus, setTestSubscriptionStatus] = useState<'free' | 'premium'>('free')
+  const [testIsAdmin, setTestIsAdmin] = useState(false)
+  const [testingResult, setTestingResult] = useState<any>(null)
 
   // Check admin access
   useEffect(() => {
@@ -411,6 +417,53 @@ const AdminDashboard: React.FC = () => {
     }
   }
 
+  // Testing tools functions
+  const updateTestUserSettings = async () => {
+    const firebaseUser = firebaseAuth.getCurrentUser()
+    if (!firebaseUser) {
+      alert('No user authenticated')
+      return
+    }
+
+    try {
+      const token = await firebaseUser.getIdToken()
+      const response = await fetch('/api/admin/update-test-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userType: testUserType,
+          subscriptionStatus: testSubscriptionStatus,
+          isAdmin: testIsAdmin
+        })
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update user settings')
+      }
+      
+      const data = await response.json()
+      setTestingResult(data)
+      console.log('User settings updated:', data)
+      alert('User settings updated successfully! Please refresh the page to see changes.')
+    } catch (error) {
+      console.error('Error updating user settings:', error)
+      alert('Failed to update user settings: ' + error.message)
+    }
+  }
+
+  const resetToCurrentUser = async () => {
+    if (!user) return
+    
+    setTestUserType(user.userType as 'creator' | 'business')
+    setTestSubscriptionStatus(user.subscription?.status === 'active' ? 'premium' : 'free')
+    setTestIsAdmin(user.isAdmin || false)
+    setTestingResult(null)
+  }
+
   const filteredUsers = users.filter(user => {
     const matchesFilter = userFilter === 'all' || user.userType === userFilter
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -508,7 +561,8 @@ const AdminDashboard: React.FC = () => {
               { id: 'bounties', label: 'Bounties', icon: Target },
               { id: 'content', label: 'Content Review', icon: FileText },
               { id: 'payments', label: 'Payments', icon: DollarSign },
-              { id: 'debug', label: 'Debug Tools', icon: Bug }
+              { id: 'debug', label: 'Debug Tools', icon: Bug },
+              { id: 'testing', label: 'Testing Tools', icon: TestTube }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1091,6 +1145,203 @@ const AdminDashboard: React.FC = () => {
                   <p><strong>Environment Check:</strong> Verify configuration and environment variables</p>
                   <p><strong>Access Level:</strong> Admin only - these tools are restricted to administrators</p>
                   <p><strong>Status:</strong> ✅ Re-enabled with Vercel Pro plan (unlimited functions)</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'testing' && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-white">Testing Tools</h2>
+              <p className="text-gray-300">
+                Switch between different user types and subscription levels for testing features without creating multiple accounts.
+              </p>
+              
+              <div className="bg-white/5 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-white mb-6">User Type & Subscription Toggle</h3>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* User Type Selection */}
+                  <div className="space-y-4">
+                    <h4 className="text-white font-medium">User Type</h4>
+                    <div className="space-y-3">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="userType"
+                          value="creator"
+                          checked={testUserType === 'creator'}
+                          onChange={(e) => setTestUserType(e.target.value as 'creator' | 'business')}
+                          className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500"
+                        />
+                        <div className="flex items-center space-x-2">
+                          <Users className="w-5 h-5 text-purple-400" />
+                          <span className="text-white">Creator</span>
+                        </div>
+                      </label>
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="userType"
+                          value="business"
+                          checked={testUserType === 'business'}
+                          onChange={(e) => setTestUserType(e.target.value as 'creator' | 'business')}
+                          className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500"
+                        />
+                        <div className="flex items-center space-x-2">
+                          <Target className="w-5 h-5 text-orange-400" />
+                          <span className="text-white">Business</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Subscription Status */}
+                  <div className="space-y-4">
+                    <h4 className="text-white font-medium">Subscription Status</h4>
+                    <div className="space-y-3">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="subscription"
+                          value="free"
+                          checked={testSubscriptionStatus === 'free'}
+                          onChange={(e) => setTestSubscriptionStatus(e.target.value as 'free' | 'premium')}
+                          className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500"
+                        />
+                        <div className="flex items-center space-x-2">
+                          <span className="text-white">Free</span>
+                        </div>
+                      </label>
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="subscription"
+                          value="premium"
+                          checked={testSubscriptionStatus === 'premium'}
+                          onChange={(e) => setTestSubscriptionStatus(e.target.value as 'free' | 'premium')}
+                          className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 focus:ring-blue-500"
+                        />
+                        <div className="flex items-center space-x-2">
+                          <Star className="w-5 h-5 text-yellow-400" />
+                          <span className="text-white">Premium</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Admin Toggle */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h4 className="text-white font-medium mb-4">Admin Access</h4>
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={testIsAdmin}
+                      onChange={(e) => setTestIsAdmin(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <Shield className="w-5 h-5 text-blue-400" />
+                      <span className="text-white">Admin Access</span>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Current User Info */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h4 className="text-white font-medium mb-4">Current User Settings</h4>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-400">Type:</span>
+                        <span className="text-white ml-2 capitalize">{user?.userType}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Subscription:</span>
+                        <span className="text-white ml-2">
+                          {user?.subscription?.status === 'active' ? 'Premium' : 'Free'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Admin:</span>
+                        <span className="text-white ml-2">
+                          {user?.isAdmin ? 'Yes' : 'No'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-6 flex flex-wrap gap-4">
+                  <button
+                    onClick={updateTestUserSettings}
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  >
+                    <TestTube className="w-5 h-5 mr-2" />
+                    Apply Test Settings
+                  </button>
+                  
+                  <button
+                    onClick={resetToCurrentUser}
+                    className="inline-flex items-center px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                  >
+                    <Settings className="w-5 h-5 mr-2" />
+                    Reset to Current
+                  </button>
+                </div>
+
+                {/* Testing Result */}
+                {testingResult && (
+                  <div className="mt-6 p-4 bg-white/5 rounded-lg">
+                    <h4 className="text-white font-medium mb-2">Last Update Result</h4>
+                    <div className="text-sm text-gray-300">
+                      <pre className="whitespace-pre-wrap">{JSON.stringify(testingResult, null, 2)}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {/* Feature Access Preview */}
+                <div className="mt-6 pt-6 border-t border-white/10">
+                  <h4 className="text-white font-medium mb-4">Feature Access Preview</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <h5 className="text-white font-medium mb-2">Creator Features</h5>
+                      <div className="space-y-1 text-sm">
+                        <div className={`flex items-center space-x-2 ${testUserType === 'creator' ? 'text-green-400' : 'text-gray-500'}`}>
+                          <span>{testUserType === 'creator' ? '✅' : '❌'}</span>
+                          <span>Creator Pipeline</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 ${testUserType === 'creator' && testSubscriptionStatus === 'premium' ? 'text-green-400' : 'text-gray-500'}`}>
+                          <span>{testUserType === 'creator' && testSubscriptionStatus === 'premium' ? '✅' : '❌'}</span>
+                          <span>Brand Discovery</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 ${testUserType === 'creator' ? 'text-green-400' : 'text-gray-500'}`}>
+                          <span>{testUserType === 'creator' ? '✅' : '❌'}</span>
+                          <span>Applications</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-4">
+                      <h5 className="text-white font-medium mb-2">Business Features</h5>
+                      <div className="space-y-1 text-sm">
+                        <div className={`flex items-center space-x-2 ${testUserType === 'business' ? 'text-green-400' : 'text-gray-500'}`}>
+                          <span>{testUserType === 'business' ? '✅' : '❌'}</span>
+                          <span>Create Bounties</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 ${testUserType === 'business' ? 'text-green-400' : 'text-gray-500'}`}>
+                          <span>{testUserType === 'business' ? '✅' : '❌'}</span>
+                          <span>Manage Applications</span>
+                        </div>
+                        <div className={`flex items-center space-x-2 ${testIsAdmin ? 'text-green-400' : 'text-gray-500'}`}>
+                          <span>{testIsAdmin ? '✅' : '❌'}</span>
+                          <span>Admin Dashboard</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
