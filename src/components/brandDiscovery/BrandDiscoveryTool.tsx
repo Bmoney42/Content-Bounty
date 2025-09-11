@@ -14,7 +14,11 @@ import {
   RefreshCw,
   TrendingUp,
   Users,
-  Target
+  Target,
+  Play,
+  Instagram,
+  Youtube,
+  Zap
 } from 'lucide-react'
 
 const BrandDiscoveryTool: React.FC = () => {
@@ -28,6 +32,13 @@ const BrandDiscoveryTool: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filters, setFilters] = useState<BrandDiscoveryFilters>({})
   const [selectedLead, setSelectedLead] = useState<BrandLead | null>(null)
+  
+  // Scraping state
+  const [isScraping, setIsScraping] = useState(false)
+  const [scrapingJob, setScrapingJob] = useState<any>(null)
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['instagram'])
+  const [searchTerms, setSearchTerms] = useState<string[]>(['#ad', '#sponsored', 'paid partnership'])
+  const [newSearchTerm, setNewSearchTerm] = useState('')
 
   // Load brand leads on component mount
   useEffect(() => {
@@ -176,6 +187,69 @@ const BrandDiscoveryTool: React.FC = () => {
     return { total, newLeads, contacted, closed }
   }
 
+  // Scraping functions
+  const handleStartScraping = async () => {
+    if (!user?.id || selectedPlatforms.length === 0 || searchTerms.length === 0) {
+      alert('Please select at least one platform and add search terms')
+      return
+    }
+
+    try {
+      setIsScraping(true)
+      const job = await brandDiscoveryService.startApifyScraping(user.id, selectedPlatforms, searchTerms)
+      setScrapingJob(job)
+      
+      // Start polling for results
+      pollScrapingResults(job.id)
+    } catch (error) {
+      console.error('Error starting scraping:', error)
+      alert('Failed to start scraping job')
+    } finally {
+      setIsScraping(false)
+    }
+  }
+
+  const pollScrapingResults = async (jobId: string) => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const job = await brandDiscoveryService.getScrapingJob(jobId)
+        setScrapingJob(job)
+        
+        if (job.status === 'completed') {
+          clearInterval(pollInterval)
+          // Reload brand leads to show new ones
+          await loadBrandLeads()
+          alert(`Scraping completed! Found ${job.leadsFound} new brand leads.`)
+        } else if (job.status === 'failed') {
+          clearInterval(pollInterval)
+          alert('Scraping job failed. Please try again.')
+        }
+      } catch (error) {
+        console.error('Error polling scraping results:', error)
+        clearInterval(pollInterval)
+      }
+    }, 5000) // Poll every 5 seconds
+  }
+
+  const addSearchTerm = () => {
+    if (newSearchTerm.trim() && !searchTerms.includes(newSearchTerm.trim())) {
+      setSearchTerms(prev => [...prev, newSearchTerm.trim()])
+      setNewSearchTerm('')
+    }
+  }
+
+  const removeSearchTerm = (term: string) => {
+    setSearchTerms(prev => prev.filter(t => t !== term))
+  }
+
+  const togglePlatform = (platform: string) => {
+    setSelectedPlatforms(prev => 
+      prev.includes(platform) 
+        ? prev.filter(p => p !== platform)
+        : [...prev, platform]
+    )
+  }
+
   if (!isPremium) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -247,6 +321,144 @@ const BrandDiscoveryTool: React.FC = () => {
               <p className="text-2xl font-bold text-gray-900">{stats.closed}</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Scraping Section */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-purple-100 rounded-lg">
+            <Zap className="w-6 h-6 text-purple-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Brand Discovery Scraping</h2>
+            <p className="text-gray-600">Automatically find brands spending on sponsorships</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Platform Selection */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Select Platforms</h3>
+            <div className="space-y-3">
+              {[
+                { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'bg-pink-500' },
+                { id: 'tiktok', name: 'TikTok', icon: Play, color: 'bg-black' },
+                { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-500' }
+              ].map(platform => (
+                <label key={platform.id} className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatforms.includes(platform.id)}
+                    onChange={() => togglePlatform(platform.id)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <div className={`w-8 h-8 ${platform.color} rounded-lg flex items-center justify-center`}>
+                    <platform.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-gray-700">{platform.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Search Terms */}
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Search Terms</h3>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSearchTerm}
+                  onChange={(e) => setNewSearchTerm(e.target.value)}
+                  placeholder="Add search term (e.g., #ad, #sponsored)"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onKeyPress={(e) => e.key === 'Enter' && addSearchTerm()}
+                />
+                <button
+                  onClick={addSearchTerm}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Add
+                </button>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {searchTerms.map(term => (
+                  <span
+                    key={term}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  >
+                    {term}
+                    <button
+                      onClick={() => removeSearchTerm(term)}
+                      className="ml-1 text-blue-600 hover:text-blue-800"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scraping Status */}
+        {scrapingJob && (
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">Scraping Job Status</h4>
+                <p className="text-sm text-gray-600">
+                  Status: <span className={`font-medium ${
+                    scrapingJob.status === 'completed' ? 'text-green-600' :
+                    scrapingJob.status === 'failed' ? 'text-red-600' :
+                    'text-blue-600'
+                  }`}>
+                    {scrapingJob.status}
+                  </span>
+                </p>
+                {scrapingJob.progress > 0 && (
+                  <div className="mt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${scrapingJob.progress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{scrapingJob.progress}% complete</p>
+                  </div>
+                )}
+              </div>
+              {scrapingJob.leadsFound > 0 && (
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{scrapingJob.leadsFound}</p>
+                  <p className="text-xs text-gray-500">leads found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Start Scraping Button */}
+        <div className="mt-6">
+          <button
+            onClick={handleStartScraping}
+            disabled={isScraping || selectedPlatforms.length === 0 || searchTerms.length === 0}
+            className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isScraping ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                Starting Scraping...
+              </>
+            ) : (
+              <>
+                <Zap className="w-5 h-5" />
+                Start Brand Discovery
+              </>
+            )}
+          </button>
         </div>
       </div>
 

@@ -216,6 +216,27 @@ export class BrandDiscoveryService {
       throw new Error('Failed to get scraping jobs')
     }
   }
+
+  // Get specific scraping job
+  async getScrapingJob(jobId: string): Promise<ScrapingJob> {
+    try {
+      const jobDoc = await getDoc(doc(db, this.scrapingJobsCollection, jobId))
+      if (!jobDoc.exists()) {
+        throw new Error('Scraping job not found')
+      }
+      
+      const data = jobDoc.data()
+      return {
+        ...data,
+        id: jobDoc.id,
+        startedAt: data.startedAt?.toDate() || new Date(),
+        completedAt: data.completedAt?.toDate()
+      } as ScrapingJob
+    } catch (error) {
+      console.error('Error getting scraping job:', error)
+      throw new Error('Failed to get scraping job')
+    }
+  }
   
   // Detect sponsorship signals in text
   detectSponsorshipSignals(text: string, hashtags: string[] = []): string[] {
