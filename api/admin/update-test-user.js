@@ -11,10 +11,10 @@ function hasAdminAccess(user) {
     // Add additional admin emails here as needed
   ]
   
-  return user.isAdmin === true
+  return user.isAdmin === true || AUTHORIZED_ADMIN_EMAILS.includes(user.email)
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -119,3 +119,5 @@ export default async function handler(req, res) {
     })
   }
 }
+
+module.exports = handler
