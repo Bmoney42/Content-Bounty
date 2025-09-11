@@ -361,6 +361,65 @@ export class BrandDiscoveryService {
     const engagement = likes + comments + shares
     return Math.round((engagement / followers) * 100 * 100) / 100 // Round to 2 decimal places
   }
+
+  // Get discovered brands for review
+  async getDiscoveredBrands(jobId: string): Promise<any[]> {
+    try {
+      const q = query(
+        collection(db, 'discoveredBrands'),
+        where('jobId', '==', jobId),
+        orderBy('detectedAt', 'desc')
+      )
+      
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map(doc => {
+        const data = doc.data()
+        return {
+          ...data,
+          id: doc.id,
+          detectedAt: data.detectedAt?.toDate() || new Date()
+        }
+      })
+    } catch (error) {
+      console.error('Error getting discovered brands:', error)
+      throw new Error('Failed to get discovered brands')
+    }
+  }
+
+  // Add discovered brand to CRM
+  async addDiscoveredBrandToCRM(creatorId: string, brand: any): Promise<void> {
+    try {
+      const brandLead: BrandLead = {
+        id: generateId(),
+        creatorId,
+        brandName: brand.brandName,
+        platform: brand.platform,
+        sourcePostId: brand.sourcePostId,
+        sourceUrl: brand.sourceUrl,
+        detectedAt: brand.detectedAt,
+        sponsorshipSignals: brand.sponsorshipSignals,
+        brandHandle: brand.brandHandle,
+        websiteUrl: brand.websiteUrl,
+        engagementRate: brand.engagementRate,
+        followerCount: brand.followerCount,
+        status: 'new',
+        tags: [],
+        priority: 'medium',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      await addDoc(collection(db, this.brandLeadsCollection), {
+        ...brandLead,
+        detectedAt: Timestamp.fromDate(brandLead.detectedAt),
+        createdAt: Timestamp.fromDate(brandLead.createdAt),
+        updatedAt: Timestamp.fromDate(brandLead.updatedAt)
+      })
+    } catch (error) {
+      console.error('Error adding brand to CRM:', error)
+      throw new Error('Failed to add brand to CRM')
+    }
+  }
 }
 
 // Export singleton instance

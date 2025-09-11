@@ -24,16 +24,15 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { creatorId, platforms, searchTerms, jobId } = req.body
+    const { creatorId, platforms, jobId } = req.body
 
     // Validate input
     if (!creatorId || !platforms || !Array.isArray(platforms) || platforms.length === 0) {
       return res.status(400).json({ error: 'Missing required fields: creatorId, platforms' })
     }
 
-    if (!searchTerms || !Array.isArray(searchTerms) || searchTerms.length === 0) {
-      return res.status(400).json({ error: 'Missing required fields: searchTerms' })
-    }
+    // Default sponsorship keywords for automatic detection
+    const defaultSearchTerms = ['#ad', '#sponsored', '#partnership', '#collab', '#paidpartnership', 'sponsored', 'paid partnership']
 
     // Verify user can only start scraping for themselves
     if (user.uid !== creatorId) {
@@ -70,27 +69,31 @@ module.exports = async function handler(req, res) {
         switch (platform) {
           case 'instagram':
             run = await apifyClient.actor('apify/instagram-scraper').call({
-              hashtags: searchTerms,
+              hashtags: defaultSearchTerms,
               resultsLimit: 1000,
               includeComments: true,
               includeHashtags: true,
-              maxItems: 500 // Limit to control costs
+              maxItems: 500, // Limit to control costs
+              resultsType: 'posts',
+              searchType: 'hashtag'
             })
             break
             
           case 'tiktok':
             run = await apifyClient.actor('clockworks/tiktok-scraper').call({
-              searchTerms,
+              searchTerms: defaultSearchTerms,
               resultsLimit: 1000,
-              maxItems: 500 // Limit to control costs
+              maxItems: 500, // Limit to control costs
+              searchType: 'hashtag'
             })
             break
             
           case 'youtube':
             run = await apifyClient.actor('apify/youtube-scraper').call({
-              searchTerms,
+              searchTerms: defaultSearchTerms,
               resultsLimit: 1000,
-              maxItems: 500 // Limit to control costs
+              maxItems: 500, // Limit to control costs
+              searchType: 'video'
             })
             break
             
