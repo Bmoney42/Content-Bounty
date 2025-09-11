@@ -64,7 +64,7 @@ async function handler(req, res) {
       updatedAt: new Date()
     }
 
-    // Handle subscription status
+    // Handle subscription status on both users doc and subscriptions collection
     if (subscriptionStatus === 'premium') {
       updateData.subscription = {
         status: 'active',
@@ -76,6 +76,19 @@ async function handler(req, res) {
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
         isActive: true
       }
+      // Mirror real subscriber structure
+      await admin.firestore().collection('subscriptions').doc(decodedToken.uid).set({
+        status: 'active',
+        planId: 'creator_premium',
+        planName: 'Creator Premium',
+        price: 1499, // cents for consistency if used that way
+        currency: 'usd',
+        interval: 'month',
+        currentPeriodStart: admin.firestore.Timestamp.fromDate(new Date()),
+        currentPeriodEnd: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+        isActive: true,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true })
     } else {
       updateData.subscription = {
         status: 'inactive',
@@ -87,6 +100,12 @@ async function handler(req, res) {
         endDate: null,
         isActive: false
       }
+      await admin.firestore().collection('subscriptions').doc(decodedToken.uid).set({
+        status: 'inactive',
+        isActive: false,
+        canceledAt: admin.firestore.Timestamp.fromDate(new Date()),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true })
     }
 
     await userRef.update(updateData)
