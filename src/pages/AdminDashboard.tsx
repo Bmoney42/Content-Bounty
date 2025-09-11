@@ -118,9 +118,9 @@ const AdminDashboard: React.FC = () => {
     try {
       setLoading(true)
       
-      // Load all users (this would need pagination in production)
-      const allUsers = await firebaseDB.getAllUsers()
-      setUsers(allUsers)
+      // For now, we'll load limited data due to Firestore security rules
+      // In production, you'd need to set up proper admin permissions
+      setUsers([]) // Empty for now - requires admin Firestore rules
       
       // Load all bounties
       const allBounties = await firebaseDB.getAllBounties()
@@ -130,9 +130,7 @@ const AdminDashboard: React.FC = () => {
       const pendingSubmissions = await firebaseDB.getPendingSubmissions()
       setSubmissions(pendingSubmissions)
       
-      // Calculate stats
-      const creators = allUsers.filter(u => u.userType === 'creator')
-      const businesses = allUsers.filter(u => u.userType === 'business')
+      // Calculate stats with available data
       const activeBounties = allBounties.filter(b => b.status === 'active')
       const completedBounties = allBounties.filter(b => b.status === 'completed')
       
@@ -145,9 +143,9 @@ const AdminDashboard: React.FC = () => {
       const platformRevenue = totalSpent * 0.05
       
       setStats({
-        totalUsers: allUsers.length,
-        totalCreators: creators.length,
-        totalBusinesses: businesses.length,
+        totalUsers: 0, // Requires admin Firestore rules
+        totalCreators: 0, // Requires admin Firestore rules
+        totalBusinesses: 0, // Requires admin Firestore rules
         totalBounties: allBounties.length,
         activeBounties: activeBounties.length,
         completedBounties: completedBounties.length,
@@ -663,44 +661,66 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {filteredUsers.map(user => (
-                  <div key={user.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                        {user.name[0].toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-white font-medium">{user.name}</p>
-                        <p className="text-gray-400 text-sm">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        user.userType === 'creator' ? 'bg-purple-500/20 text-purple-300' :
-                        'bg-orange-500/20 text-orange-300'
-                      }`}>
-                        {user.userType}
-                      </span>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleUserAction(user.id, 'verify')}
-                          className="p-2 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition-colors"
-                          title="Verify User"
-                        >
-                          <UserCheck className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleUserAction(user.id, 'suspend')}
-                          className="p-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
-                          title="Suspend User"
-                        >
-                          <Ban className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+              {/* Admin Setup Notice */}
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                  <div>
+                    <h3 className="text-yellow-300 font-medium">Admin Setup Required</h3>
+                    <p className="text-gray-300 text-sm mt-1">
+                      User management features require proper Firestore security rules for admin access. 
+                      Currently showing limited data. Use the <strong>Testing Tools</strong> tab to test user type switching.
+                    </p>
                   </div>
-                ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {filteredUsers.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">No users loaded</h3>
+                    <p className="text-gray-400">User data requires admin Firestore permissions to load.</p>
+                  </div>
+                ) : (
+                  filteredUsers.map(user => (
+                    <div key={user.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                          {user.name[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{user.name}</p>
+                          <p className="text-gray-400 text-sm">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          user.userType === 'creator' ? 'bg-purple-500/20 text-purple-300' :
+                          'bg-orange-500/20 text-orange-300'
+                        }`}>
+                          {user.userType}
+                        </span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleUserAction(user.id, 'verify')}
+                            className="p-2 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition-colors"
+                            title="Verify User"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleUserAction(user.id, 'suspend')}
+                            className="p-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                            title="Suspend User"
+                          >
+                            <Ban className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

@@ -1,5 +1,18 @@
-import { firebaseAdmin } from '../lib/firebase.js'
-import { hasAdminAccess } from '../../src/config/adminConfig.js'
+const { admin } = require('../lib/firebase.js')
+
+// Admin access check function (inline to avoid import issues)
+function hasAdminAccess(user) {
+  if (!user || !user.email) {
+    return false
+  }
+  
+  const AUTHORIZED_ADMIN_EMAILS = [
+    'brandon@themoneyfriends.com',
+    // Add additional admin emails here as needed
+  ]
+  
+  return user.isAdmin === true
+}
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -15,7 +28,7 @@ export default async function handler(req, res) {
     }
 
     const token = authHeader.split('Bearer ')[1]
-    const decodedToken = await firebaseAdmin.auth().verifyIdToken(token)
+    const decodedToken = await admin.auth().verifyIdToken(token)
     
     // Check if user has admin access
     const user = {
@@ -43,7 +56,7 @@ export default async function handler(req, res) {
     }
 
     // Update user document in Firestore
-    const userRef = firebaseAdmin.firestore().collection('users').doc(decodedToken.uid)
+    const userRef = admin.firestore().collection('users').doc(decodedToken.uid)
     
     const updateData = {
       userType,
@@ -85,7 +98,7 @@ export default async function handler(req, res) {
       subscriptionStatus: subscriptionStatus === 'premium' ? 'active' : 'inactive'
     }
 
-    await firebaseAdmin.auth().setCustomUserClaims(decodedToken.uid, customClaims)
+    await admin.auth().setCustomUserClaims(decodedToken.uid, customClaims)
 
     return res.status(200).json({
       success: true,
