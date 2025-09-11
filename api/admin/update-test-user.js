@@ -78,7 +78,9 @@ async function handler(req, res) {
       }
       // Mirror real subscriber structure
       await admin.firestore().collection('subscriptions').doc(decodedToken.uid).set({
+        userId: decodedToken.uid,
         status: 'active',
+        tier: 'premium', // This is the key field the app checks for
         planId: 'creator_premium',
         planName: 'Creator Premium',
         price: 1499, // cents for consistency if used that way
@@ -101,7 +103,9 @@ async function handler(req, res) {
         isActive: false
       }
       await admin.firestore().collection('subscriptions').doc(decodedToken.uid).set({
+        userId: decodedToken.uid,
         status: 'inactive',
+        tier: 'free', // Set to free tier
         isActive: false,
         canceledAt: admin.firestore.Timestamp.fromDate(new Date()),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
