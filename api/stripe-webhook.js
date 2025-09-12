@@ -91,6 +91,10 @@ module.exports = async function handler(req, res) {
         await handlePaymentIntentSucceeded(event.data.object)
         break
       
+      case 'payment_intent.failed':
+        await handlePaymentIntentFailed(event.data.object)
+        break
+      
       case 'transfer.created':
         await handleTransferCreated(event.data.object)
         break
@@ -408,6 +412,39 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
       }
       
       console.log('Escrow payment held for bounty:', bountyId)
+    }
+  }
+}
+
+// Handle payment intent failed
+async function handlePaymentIntentFailed(paymentIntent) {
+  console.log('Processing payment intent failed:', paymentIntent.id)
+  
+  const metadata = paymentIntent.metadata || {}
+  
+  if (metadata.type === 'escrow_payment') {
+    const escrowPaymentId = metadata.escrowPaymentId
+    const bountyId = metadata.bountyId
+    
+    if (escrowPaymentId) {
+      // Update escrow payment status to failed
+      await firebaseDB.collection('escrow_payments').doc(escrowPaymentId).update({
+        status: 'failed',
+        stripePaymentIntentId: paymentIntent.id,
+        failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      })
+      
+      // Update bounty status if bountyId is provided
+      if (bountyId) {
+        await firebaseDB.collection('bounties').doc(bountyId).update({
+          status: 'pending',
+          paymentStatus: 'failed',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        })
+      }
+      
+      console.log('Escrow payment failed for bounty:', bountyId)
     }
   }
 }
