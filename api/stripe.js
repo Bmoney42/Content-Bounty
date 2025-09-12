@@ -207,6 +207,14 @@ async function handleEscrowPayment(req, res, user) {
       },
     ],
     mode: 'payment',
+    payment_intent_data: {
+      metadata: { 
+        escrowPaymentId: escrowPaymentId,
+        bountyId, 
+        businessId: user.uid, 
+        type: 'escrow_payment' 
+      }
+    },
     success_url: `${process.env.FRONTEND_URL || 'https://creatorbounty.xyz'}/bounties?payment=success&escrow=${escrowPaymentId}`,
     cancel_url: `${process.env.FRONTEND_URL || 'https://creatorbounty.xyz'}/bounties?payment=canceled`,
     metadata: { 
@@ -294,6 +302,13 @@ async function handleEscrowPaymentUpfront(req, res, user) {
       },
     ],
     mode: 'payment',
+    payment_intent_data: {
+      metadata: { 
+        escrowPaymentId: escrowPaymentId,
+        businessId: user.uid, 
+        type: 'upfront_escrow_payment' 
+      }
+    },
     success_url: `${process.env.FRONTEND_URL || 'https://creatorbounty.xyz'}/bounties?payment=success&escrow=${escrowPaymentId}`,
     cancel_url: `${process.env.FRONTEND_URL || 'https://creatorbounty.xyz'}/bounties/new?payment=canceled`,
     metadata: { 
@@ -667,22 +682,24 @@ async function handleCreateConnectOnboardingLink(req, res, user) {
   }
 
   try {
-    // Use HTTPS URLs for production (required by Stripe live mode)
-    // Default to production URL since we're deployed
+    // Always use HTTPS URLs for production (required by Stripe live mode)
     const baseUrl = process.env.FRONTEND_URL || 'https://creatorbounty.xyz'
     
+    // Ensure HTTPS for production
+    const httpsBaseUrl = baseUrl.startsWith('https://') ? baseUrl : `https://${baseUrl.replace(/^https?:\/\//, '')}`
+    
     console.log('🔗 Creating onboarding link with URLs:', {
-      baseUrl,
-      refreshUrl: `${baseUrl}/creator-banking?refresh=true`,
-      returnUrl: `${baseUrl}/creator-banking?success=true`,
+      baseUrl: httpsBaseUrl,
+      refreshUrl: `${httpsBaseUrl}/creator-banking?refresh=true`,
+      returnUrl: `${httpsBaseUrl}/creator-banking?success=true`,
       nodeEnv: process.env.NODE_ENV,
       frontendUrl: process.env.FRONTEND_URL
     })
     
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${baseUrl}/creator-banking?refresh=true`,
-      return_url: `${baseUrl}/creator-banking?success=true`,
+      refresh_url: `${httpsBaseUrl}/creator-banking?refresh=true`,
+      return_url: `${httpsBaseUrl}/creator-banking?success=true`,
       type: 'account_onboarding',
     })
     

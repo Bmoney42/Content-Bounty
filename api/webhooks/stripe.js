@@ -298,6 +298,7 @@ async function handleCheckoutSessionCompleted(session) {
     await firebaseDB.collection('escrow_payments').doc(escrowPaymentId).update({
       bountyId: bountyId,
       status: 'held_in_escrow',
+      stripePaymentIntentId: paymentIntent.id,
       bountyData: null, // Clear temporary bounty data
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     })
@@ -334,7 +335,8 @@ async function handlePaymentIntentCreated(paymentIntent) {
   console.log('Processing payment intent created:', paymentIntent.id)
   
   // Only handle escrow payments
-  if (paymentIntent.metadata?.type !== 'escrow_payment') {
+  if (paymentIntent.metadata?.type !== 'escrow_payment' && 
+      paymentIntent.metadata?.type !== 'upfront_escrow_payment') {
     return
   }
   
@@ -347,6 +349,7 @@ async function handlePaymentIntentCreated(paymentIntent) {
   // Update escrow payment status to pending
   await firebaseDB.collection('escrow_payments').doc(escrowPaymentId).update({
     status: 'pending',
+    stripePaymentIntentId: paymentIntent.id,
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   })
   
@@ -405,6 +408,7 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
     await firebaseDB.collection('escrow_payments').doc(escrowPaymentId).update({
       bountyId: bountyId,
       status: 'held_in_escrow',
+      stripePaymentIntentId: paymentIntent.id,
       bountyData: null, // Clear temporary bounty data
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     })
@@ -418,6 +422,7 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
     // Update escrow payment status to held in escrow
     await firebaseDB.collection('escrow_payments').doc(escrowPaymentId).update({
       status: 'held_in_escrow',
+      stripePaymentIntentId: paymentIntent.id,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     })
     

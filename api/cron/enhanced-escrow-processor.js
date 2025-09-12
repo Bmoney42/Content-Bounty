@@ -76,6 +76,14 @@ module.exports = async (req, res) => {
 
         const bountyData = bountySnap.data()
 
+        // Safety check: Skip test bounties to prevent accidental payouts
+        if (bountyData.title?.toLowerCase().includes('test') || 
+            bountyData.description?.toLowerCase().includes('test') ||
+            escrowPayment.amount < 100) { // Less than $1.00
+          console.log(`⚠️ Skipping test bounty: ${escrowPayment.bountyId} (title: "${bountyData.title}", amount: ${escrowPayment.amount})`)
+          continue
+        }
+
         // Check if bounty is completed and has approved submissions
         const submissionsRef = db.collection('submissions')
         const submissionsQuery = submissionsRef
@@ -92,6 +100,24 @@ module.exports = async (req, res) => {
             'escrow_manual_review',
             'Escrow Payment Requires Manual Review',
             `Escrow payment for bounty "${bountyData.title}" has expired but no approved submissions found. Manual review required.`,
+            {
+              escrowPaymentId,
+              bountyId: escrowPayment.bountyId,
+              amount: escrowPayment.creatorEarnings
+            },
+            'high'
+          )
+          continue
+        }
+
+        // Additional safety check: Ensure bounty is actually completed
+        if (bountyData.status !== 'completed') {
+          console.log(`⚠️ Bounty ${escrowPayment.bountyId} is not marked as completed, skipping automatic release`)
+          await TaskQueueUtils.queueNotification(
+            escrowPayment.businessId,
+            'escrow_manual_review',
+            'Escrow Payment Requires Manual Review',
+            `Escrow payment for bounty "${bountyData.title}" has expired but bounty is not marked as completed. Manual review required.`,
             {
               escrowPaymentId,
               bountyId: escrowPayment.bountyId,

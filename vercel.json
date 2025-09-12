@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/webhooks/stripe.js": {
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
