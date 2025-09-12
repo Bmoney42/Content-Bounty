@@ -22,23 +22,40 @@ if (!webhookSecret) {
 }
 
 module.exports = async function handler(req, res) {
+  console.log('🔔 Webhook received:', {
+    method: req.method,
+    url: req.url,
+    headers: {
+      'stripe-signature': req.headers['stripe-signature'] ? 'present' : 'missing',
+      'content-type': req.headers['content-type'],
+      'user-agent': req.headers['user-agent']
+    }
+  })
+
   if (req.method !== 'POST') {
+    console.log('❌ Method not allowed:', req.method)
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const sig = req.headers['stripe-signature']
   const rawBody = req.body
 
+  if (!sig) {
+    console.error('❌ Missing Stripe signature header')
+    return res.status(400).json({ error: 'Missing Stripe signature' })
+  }
+
   let event
 
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret)
+    console.log('✅ Webhook signature verified for event:', event.type, event.id)
   } catch (err) {
-    console.error('Webhook signature verification failed:', err.message)
+    console.error('❌ Webhook signature verification failed:', err.message)
     return res.status(400).json({ error: 'Webhook signature verification failed' })
   }
 
-  console.log('Received webhook event:', event.type)
+  console.log('📨 Processing webhook event:', event.type, 'ID:', event.id)
 
   try {
     switch (event.type) {
@@ -95,10 +112,12 @@ module.exports = async function handler(req, res) {
         console.log(`Unhandled event type: ${event.type}`)
     }
 
-    res.status(200).json({ received: true })
+    console.log('✅ Webhook processed successfully:', event.type, event.id)
+    res.status(200).json({ received: true, eventId: event.id, eventType: event.type })
   } catch (error) {
-    console.error('Error processing webhook:', error)
-    res.status(500).json({ error: 'Webhook processing failed' })
+    console.error('❌ Error processing webhook:', error)
+    console.error('Event details:', { type: event.type, id: event.id })
+    res.status(500).json({ error: 'Webhook processing failed', eventId: event.id })
   }
 }
 
