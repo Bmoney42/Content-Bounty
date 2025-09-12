@@ -5,6 +5,9 @@
     },
     "api/stripe-webhook.js": {
       "maxDuration": 30
+    },
+    "api/stripe-hook.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
