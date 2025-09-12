@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
       businessEmail: user.email,
       amount: paymentIntent.amount / 100, // Convert from cents
       currency: paymentIntent.currency,
-      status: 'completed',
+      status: 'held_in_escrow', // Fixed: Should be held in escrow, not completed
       stripePaymentIntentId: paymentIntentId,
       stripeCustomerId: paymentIntent.customer,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
       amount: escrowPaymentData.amount,
       currency: escrowPaymentData.currency,
       status: 'active',
-      paymentStatus: 'completed',
+      paymentStatus: 'held_in_escrow', // Fixed: Should be held in escrow, not completed
       escrowPaymentId: escrowRef.id,
       applicationsCount: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
