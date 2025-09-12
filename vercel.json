@@ -2,6 +2,9 @@
   "functions": {
     "api/webhooks/stripe.js": {
       "maxDuration": 30
+    },
+    "api/stripe-webhook.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -10,7 +13,6 @@
       "destination": "/index.html"
     }
   ],
-  "redirects": [],
   "headers": [
     {
       "source": "/(.*)",
