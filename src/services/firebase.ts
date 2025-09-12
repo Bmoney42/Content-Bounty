@@ -255,15 +255,30 @@ export const firebaseDB = {
     }
   },
 
+  // Helper function to remove undefined values from objects
+  removeUndefinedValues(obj: any): any {
+    const cleaned: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = value
+      }
+    }
+    return cleaned
+  },
+
   // Create bounty (Firebase only)
   async createBounty(bountyData: Omit<FirebaseBounty, 'id' | 'createdAt'>): Promise<string> {
+    // Clean up undefined values before saving to Firestore
+    const cleanedBountyData = this.removeUndefinedValues(bountyData)
+    
     const bountyWithTimestamp = {
-      ...bountyData,
+      ...cleanedBountyData,
       createdAt: serverTimestamp()
     }
 
     try {
       console.log('Attempting to create bounty in Firebase...')
+      console.log('Cleaned bounty data:', cleanedBountyData)
       
       // First, ensure the user document exists with proper userType
       const currentUser = firebaseAuth.getCurrentUser()

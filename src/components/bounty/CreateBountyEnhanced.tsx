@@ -62,7 +62,7 @@ const CreateBountyEnhanced: React.FC<CreateBountyEnhancedProps> = ({
       }
 
       // Create bounty with enhanced transaction system
-      const bountyId = await EnhancedFirebaseService.createBounty({
+      const bountyData: any = {
         title: sanitizedData.title,
         description: sanitizedData.description,
         category: sanitizedData.category,
@@ -86,12 +86,22 @@ const CreateBountyEnhanced: React.FC<CreateBountyEnhancedProps> = ({
         businessName: user.email || 'Unknown Business',
         status: 'pending',
         applicationsCount: 0,
-        maxCreators: sanitizedData.maxCreators,
-        maxApplications: sanitizedData.maxApplications,
         paidCreatorsCount: 0,
         totalPaidAmount: 0,
         remainingBudget: sanitizedData.budget * sanitizedData.maxCreators
-      }, user.id)
+      }
+
+      // Only add maxCreators if it's greater than 1
+      if (sanitizedData.maxCreators > 1) {
+        bountyData.maxCreators = sanitizedData.maxCreators
+      }
+
+      // Only add maxApplications if it's provided
+      if (sanitizedData.maxApplications !== undefined) {
+        bountyData.maxApplications = sanitizedData.maxApplications
+      }
+
+      const bountyId = await EnhancedFirebaseService.createBounty(bountyData, user.id)
 
       // Calculate payment amounts for Stripe
       const totalBountyAmount = sanitizedData.budget * sanitizedData.maxCreators

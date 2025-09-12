@@ -101,9 +101,9 @@ const CreateBounty: React.FC = () => {
 
       // Create bounty as pending first (payment can happen later)
       const maxCreators = formData.maxCreators ? parseInt(formData.maxCreators) : 1
-      const maxApplications = formData.maxApplications ? parseInt(formData.maxApplications) : undefined
+      const maxApplications = formData.maxApplications ? parseInt(formData.maxApplications) : null
       
-      const bountyData = {
+      const bountyData: any = {
         title: sanitizedData.title,
         description: sanitizedData.description,
         budget: sanitizedData.budget,
@@ -114,12 +114,20 @@ const CreateBounty: React.FC = () => {
         createdBy: user.id,
         businessId: user.id,
         applicationsCount: 0,
-        maxCreators: maxCreators > 1 ? maxCreators : undefined,
-        maxApplications: maxApplications || undefined, // null = unlimited applications
         // Initialize payment tracking fields
         paidCreatorsCount: 0,
         totalPaidAmount: 0,
         remainingBudget: sanitizedData.budget * maxCreators
+      }
+
+      // Only add maxCreators if it's greater than 1
+      if (maxCreators > 1) {
+        bountyData.maxCreators = maxCreators
+      }
+
+      // Only add maxApplications if it's provided
+      if (maxApplications !== null) {
+        bountyData.maxApplications = maxApplications
       }
 
       // Create the bounty in Firebase with pending status
