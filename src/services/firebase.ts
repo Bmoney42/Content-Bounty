@@ -711,7 +711,7 @@ export const firebaseDB = {
         
         await updateDoc(submissionRef, {
           ...content,
-          status: 'submitted' // Reset status to submitted for resubmission
+          status: 'pending_review' // Reset status to pending_review for resubmission
         })
         console.log('✅ Submission content updated successfully')
       } catch (error) {

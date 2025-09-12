@@ -86,13 +86,17 @@ export class ContentReviewService {
       score -= 20
     }
 
-    if (!submission.contentFiles || submission.contentFiles.length === 0) {
+    // Check if user provided either content files OR content links
+    const hasContentFiles = submission.contentFiles && submission.contentFiles.length > 0
+    const hasContentLinks = submission.contentLinks && submission.contentLinks.trim().length > 0
+    
+    if (!hasContentFiles && !hasContentLinks) {
       issues.push({
         type: 'error',
         category: 'quality',
-        message: 'At least one content file is required',
+        message: 'Either content files or content links are required',
         severity: 'high',
-        field: 'contentFiles'
+        field: 'content'
       })
       score -= 30
     }

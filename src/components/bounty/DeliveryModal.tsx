@@ -140,7 +140,23 @@ const DeliveryModal: React.FC<DeliveryModalProps> = ({
       
     } catch (error) {
       console.error('Error submitting content:', error)
-      alert('❌ Failed to submit content. Please try again.')
+      
+      // Provide more specific error messages
+      let errorMessage = '❌ Failed to submit content. Please try again.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('permission')) {
+          errorMessage = '❌ Permission denied. Please make sure you\'re logged in and have access to this bounty.'
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = '❌ Network error. Please check your connection and try again.'
+        } else if (error.message.includes('validation')) {
+          errorMessage = '❌ Validation error. Please check your submission and try again.'
+        } else {
+          errorMessage = `❌ Error: ${error.message}`
+        }
+      }
+      
+      alert(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
