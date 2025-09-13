@@ -1,10 +1,11 @@
 # Creator Sponsorship Platform
+A modern platform connecting creators with brands for sponsorship opportunities, built with Next.js, TypeScript, Prisma, and Stripe.
+
 
 ## NOT COMPLETE
 
  - **Could Not Get Stripe Escrow Account Set Up Working Propertly, So I Abandoned This Project. 
 
-A modern platform connecting creators with brands for sponsorship opportunities, built with Next.js, TypeScript, Prisma, and Stripe.
 
 ## 🚀 Features
 
