@@ -9,7 +9,7 @@ A modern platform connecting creators with brands for sponsorship opportunities,
 
 ## 🚀 Features
 
-### Core Workflow (Option 1 - Complete)
+### Core Workflow 
 
 #### For Creators
 - **Browse Available Bounties**: View all open sponsorship opportunities
